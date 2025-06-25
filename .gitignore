@@ -4,6 +4,7 @@
 
 # Xcode
 #
+imageIgnore/
 build/
 *.pbxuser
 !default.pbxuser
