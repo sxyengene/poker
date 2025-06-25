@@ -45,7 +45,7 @@ const TabNavigator = () => {
           headerShown: false,
           tabBarShowLabel: false,
           tabBarStyle: styles.tabBar,
-          tabBarActiveTintColor: '#6B7280',
+          tabBarActiveTintColor: '#007AFF',
           tabBarInactiveTintColor: '#6B7280',
         }}>
         <Tab.Screen
@@ -98,35 +98,35 @@ const TabNavigator = () => {
         />
       </Tab.Navigator>
 
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}>
-        <Pressable
-          style={styles.modalContainer}
-          onPress={() => setModalVisible(false)}>
-          <View style={styles.modalContent}>
-            <TouchableOpacity
-              style={styles.modalOption}
-              onPress={() => handleOptionPress('Start a Live Session')}>
-              <Text style={styles.optionText}>Start a Live Session</Text>
-              <View style={styles.optionIcon}>
-                <Icon name="schedule" size={20} color="#374151" />
-              </View>
-            </TouchableOpacity>
+      {modalVisible && (
+        <>
+          <Pressable
+            style={styles.modalOverlay}
+            onPress={() => setModalVisible(false)}
+          />
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <TouchableOpacity
+                style={styles.modalOption}
+                onPress={() => handleOptionPress('Start a Live Session')}>
+                <Text style={styles.optionText}>Start a Live Session</Text>
+                <View style={styles.optionIcon}>
+                  <Icon name="schedule" size={20} color="#374151" />
+                </View>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.modalOption, styles.modalOptionLast]}
-              onPress={() => handleOptionPress('Add Completed Session')}>
-              <Text style={styles.optionText}>Add Completed Session</Text>
-              <View style={styles.optionIcon}>
-                <Icon name="event" size={20} color="#374151" />
-              </View>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalOption, styles.modalOptionLast]}
+                onPress={() => handleOptionPress('Add Completed Session')}>
+                <Text style={styles.optionText}>Add Completed Session</Text>
+                <View style={styles.optionIcon}>
+                  <Icon name="event" size={20} color="#374151" />
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
-        </Pressable>
-      </Modal>
+        </>
+      )}
     </>
   );
 };
@@ -161,12 +161,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+  },
   modalContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingBottom: 65,
-    paddingHorizontal: 40,
+    position: 'absolute',
+    bottom: 65,
+    left: 40,
+    right: 40,
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
