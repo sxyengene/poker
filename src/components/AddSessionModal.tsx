@@ -9,6 +9,7 @@ import {
   Pressable,
   StyleSheet,
   Alert,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import DateTimePicker, {
@@ -59,22 +60,27 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
   onSave,
 }) => {
   // 状态管理
-  const [sessionData, setSessionData] = useState<Session>({
-    sessionType: {
-      session: 'Cash Game',
-      location: '',
-      game: '',
-      stakes: '',
-      isTournament: false,
-    },
-    startTime: new Date(),
-    endTime: new Date(),
-    buyIn: 0,
-    cashOut: 0,
-    rebuys: 0,
-    tableExpenses: 0,
-    notes: '',
-    tags: [],
+  const [sessionData, setSessionData] = useState<Session>(() => {
+    const now = new Date();
+    const endTime = new Date(now.getTime() + 5 * 60 * 60 * 1000); // 默认5小时后结束
+
+    return {
+      sessionType: {
+        session: '',
+        location: '',
+        game: '',
+        stakes: '',
+        isTournament: false,
+      },
+      startTime: now,
+      endTime: endTime,
+      buyIn: 0,
+      cashOut: 0,
+      rebuys: 0,
+      tableExpenses: 0,
+      notes: '',
+      tags: [],
+    };
   });
 
   // 选择器显示状态
@@ -244,6 +250,9 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
   };
 
   const formatDateTime = (date: Date) => {
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+      return 'Select Date';
+    }
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -252,6 +261,9 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
   };
 
   const formatTime = (date: Date) => {
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+      return 'Select Time';
+    }
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
@@ -561,16 +573,36 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
             </View>
           </ScrollView>
 
-          {/* Date Time Pickers */}
+          {/* Date Time Pickers - 平台特定配置 */}
           {showStartDatePicker && (
             <DateTimePicker
-              value={sessionData.startTime}
+              value={sessionData.startTime || new Date()}
               mode="date"
-              display="default"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
-                setShowStartDatePicker(false);
-                if (selectedDate) {
-                  updateSessionData({startTime: selectedDate});
+                if (Platform.OS === 'android') {
+                  setShowStartDatePicker(false);
+                }
+                if (event.type === 'set' && selectedDate) {
+                  try {
+                    // 保持原来的时间，只更新日期
+                    const newDateTime = new Date(selectedDate);
+                    if (sessionData.startTime) {
+                      newDateTime.setHours(sessionData.startTime.getHours());
+                      newDateTime.setMinutes(
+                        sessionData.startTime.getMinutes(),
+                      );
+                    }
+                    newDateTime.setSeconds(0);
+                    newDateTime.setMilliseconds(0);
+                    updateSessionData({startTime: newDateTime});
+                  } catch (error) {
+                    console.warn('Error updating start date:', error);
+                    updateSessionData({startTime: selectedDate});
+                  }
+                }
+                if (Platform.OS === 'ios') {
+                  setShowStartDatePicker(false);
                 }
               }}
             />
@@ -578,13 +610,30 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
 
           {showStartTimePicker && (
             <DateTimePicker
-              value={sessionData.startTime}
+              value={sessionData.startTime || new Date()}
               mode="time"
-              display="default"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
-                setShowStartTimePicker(false);
-                if (selectedDate) {
-                  updateSessionData({startTime: selectedDate});
+                if (Platform.OS === 'android') {
+                  setShowStartTimePicker(false);
+                }
+                if (event.type === 'set' && selectedDate) {
+                  // 保持原来的日期，只更新时间
+                  try {
+                    const newDateTime = new Date(
+                      sessionData.startTime || new Date(),
+                    );
+                    newDateTime.setHours(selectedDate.getHours());
+                    newDateTime.setMinutes(selectedDate.getMinutes());
+                    newDateTime.setSeconds(0);
+                    newDateTime.setMilliseconds(0);
+                    updateSessionData({startTime: newDateTime});
+                  } catch (error) {
+                    console.warn('Error updating start time:', error);
+                  }
+                }
+                if (Platform.OS === 'ios') {
+                  setShowStartTimePicker(false);
                 }
               }}
             />
@@ -592,13 +641,31 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
 
           {showEndDatePicker && (
             <DateTimePicker
-              value={sessionData.endTime}
+              value={sessionData.endTime || new Date()}
               mode="date"
-              display="default"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
-                setShowEndDatePicker(false);
-                if (selectedDate) {
-                  updateSessionData({endTime: selectedDate});
+                if (Platform.OS === 'android') {
+                  setShowEndDatePicker(false);
+                }
+                if (event.type === 'set' && selectedDate) {
+                  try {
+                    // 保持原来的时间，只更新日期
+                    const newDateTime = new Date(selectedDate);
+                    if (sessionData.endTime) {
+                      newDateTime.setHours(sessionData.endTime.getHours());
+                      newDateTime.setMinutes(sessionData.endTime.getMinutes());
+                    }
+                    newDateTime.setSeconds(0);
+                    newDateTime.setMilliseconds(0);
+                    updateSessionData({endTime: newDateTime});
+                  } catch (error) {
+                    console.warn('Error updating end date:', error);
+                    updateSessionData({endTime: selectedDate});
+                  }
+                }
+                if (Platform.OS === 'ios') {
+                  setShowEndDatePicker(false);
                 }
               }}
             />
@@ -606,13 +673,30 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
 
           {showEndTimePicker && (
             <DateTimePicker
-              value={sessionData.endTime}
+              value={sessionData.endTime || new Date()}
               mode="time"
-              display="default"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
-                setShowEndTimePicker(false);
-                if (selectedDate) {
-                  updateSessionData({endTime: selectedDate});
+                if (Platform.OS === 'android') {
+                  setShowEndTimePicker(false);
+                }
+                if (event.type === 'set' && selectedDate) {
+                  // 保持原来的日期，只更新时间
+                  try {
+                    const newDateTime = new Date(
+                      sessionData.endTime || new Date(),
+                    );
+                    newDateTime.setHours(selectedDate.getHours());
+                    newDateTime.setMinutes(selectedDate.getMinutes());
+                    newDateTime.setSeconds(0);
+                    newDateTime.setMilliseconds(0);
+                    updateSessionData({endTime: newDateTime});
+                  } catch (error) {
+                    console.warn('Error updating end time:', error);
+                  }
+                }
+                if (Platform.OS === 'ios') {
+                  setShowEndTimePicker(false);
                 }
               }}
             />
