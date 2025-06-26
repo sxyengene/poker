@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@react-native-community/datetimepicker':
+        specifier: ^8.4.2
+        version: 8.4.2(react-native@0.73.4(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(react@18.2.0))(react@18.2.0)
       '@react-navigation/bottom-tabs':
         specifier: ^6.5.11
         version: 6.6.1(@react-navigation/native@6.1.18(react-native@0.73.4(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(react@18.2.0))(react@18.2.0))(react-native-safe-area-context@4.14.1(react-native@0.73.4(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(react@18.2.0))(react@18.2.0))(react-native-screens@3.37.0(react-native@0.73.4(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(react@18.2.0))(react@18.2.0))(react-native@0.73.4(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(react@18.2.0))(react@18.2.0)
@@ -1040,6 +1043,19 @@ packages:
     resolution: {integrity: sha512-WgoUWwLDcf/G1Su2COUUVs3RzAwnV/vUTdISSpAUGgSc57mPabaAoUctKTnfYEhCnE3j02k3VtaVPwCAFRO3TQ==, tarball: https://registry.npmmirror.com/@react-native-community/cli/-/cli-12.3.2.tgz}
     engines: {node: '>=18'}
     hasBin: true
+
+  '@react-native-community/datetimepicker@8.4.2':
+    resolution: {integrity: sha512-V/s+foBfjlWGV8MKdMhxugq0SPMtYqUEYlf+sMrKUUm5Gx3pA9Qoum2ZQUqBfI4A8kgaEPIGyG/YsNX7ycnNSA==, tarball: https://registry.npmmirror.com/@react-native-community/datetimepicker/-/datetimepicker-8.4.2.tgz}
+    peerDependencies:
+      expo: '>=52.0.0'
+      react: '*'
+      react-native: '*'
+      react-native-windows: '*'
+    peerDependenciesMeta:
+      expo:
+        optional: true
+      react-native-windows:
+        optional: true
 
   '@react-native/assets-registry@0.73.1':
     resolution: {integrity: sha512-2FgAbU7uKM5SbbW9QptPPZx8N9Ke2L7bsHb+EhAanZjFZunA9PaYtyjUQ1s7HD+zDVqOQIvjkpXSv7Kejd2tqg==, tarball: https://registry.npmmirror.com/@react-native/assets-registry/-/assets-registry-0.73.1.tgz}
@@ -5268,6 +5284,12 @@ snapshots:
       - encoding
       - supports-color
       - utf-8-validate
+
+  '@react-native-community/datetimepicker@8.4.2(react-native@0.73.4(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(react@18.2.0))(react@18.2.0)':
+    dependencies:
+      invariant: 2.2.4
+      react: 18.2.0
+      react-native: 0.73.4(@babel/core@7.27.4)(@babel/preset-env@7.27.2(@babel/core@7.27.4))(react@18.2.0)
 
   '@react-native/assets-registry@0.73.1': {}
 
