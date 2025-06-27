@@ -9,6 +9,7 @@ import {
   Pressable,
   Dimensions,
   ScrollView,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
@@ -17,9 +18,11 @@ import SessionsScreen from '../screens/SessionsScreen';
 import AddSessionScreen from '../screens/AddSessionScreen';
 import StatsScreen from '../screens/StatsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-import AddSessionModal, {Session} from '../components/AddSessionModal';
+import AddSessionModal from '../components/AddSessionModal';
 import OptionModal from '../components/OptionModal';
 import {useTabBarHeight} from '../hooks/useTabBarHeight';
+import {useSessions} from '../hooks/useSessions';
+import {NewSession} from '../types/session';
 
 const Tab = createBottomTabNavigator();
 const {width} = Dimensions.get('window');
@@ -28,6 +31,7 @@ const TabNavigator = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [newSessionVisible, setNewSessionVisible] = useState(false);
   const {tabBarHeight, optimalMargin} = useTabBarHeight();
+  const {addSession} = useSessions();
 
   // 添加选项数据配置
   const addOptionsData = [
@@ -57,10 +61,22 @@ const TabNavigator = () => {
     console.log(`Selected: ${option}`);
   };
 
-  const handleSaveSession = (session: Session) => {
-    setNewSessionVisible(false);
-    console.log('Session saved:', session);
-    // 这里可以添加保存到本地存储或发送到服务器的逻辑
+  const handleSaveSession = async (session: NewSession) => {
+    try {
+      await addSession(session);
+      setNewSessionVisible(false);
+      console.log('Session saved successfully:', session);
+
+      // 显示成功提示
+      Alert.alert('保存成功', '会话已成功保存！', [
+        {text: '确定', style: 'default'},
+      ]);
+    } catch (error) {
+      console.error('Save session error:', error);
+      Alert.alert('保存失败', '保存会话时出现错误，请重试。', [
+        {text: '确定', style: 'default'},
+      ]);
+    }
   };
 
   const handleCancelSession = () => {

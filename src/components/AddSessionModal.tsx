@@ -16,42 +16,18 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import OptionModal from './OptionModal';
-
-// 类型定义
-export type SessionType = {
-  session: 'Cash Game' | 'Tournament' | '';
-  location: string;
-  game: string;
-  stakes: string;
-  isTournament: boolean;
-};
-
-export interface Session {
-  sessionType: SessionType;
-  startTime: Date;
-  endTime: Date;
-  buyIn: number;
-  cashOut: number;
-  rebuys: number;
-  tableExpenses: number;
-  notes?: string;
-  tags?: string[];
-}
-
-export type GameType =
-  | 'NL Texas Hold Em'
-  | 'Pot Limit Omaha'
-  | 'Razz'
-  | 'Mixed'
-  | 'Tournament'
-  | string;
-
-export type StakesType = '1/2' | '1/3' | '2/5' | '5/10' | string;
+import {
+  SessionType,
+  NewSession,
+  GameType,
+  StakesType,
+  CurrencyType,
+} from '../types/session';
 
 interface AddSessionModalProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (session: Session) => void;
+  onSave: (session: NewSession) => void;
 }
 
 const AddSessionModal: React.FC<AddSessionModalProps> = ({
@@ -59,8 +35,11 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
   onClose,
   onSave,
 }) => {
+  // 货币单位状态
+  const [currency, setCurrency] = useState<CurrencyType>('￥');
+
   // 状态管理
-  const [sessionData, setSessionData] = useState<Session>(() => {
+  const [sessionData, setSessionData] = useState<NewSession>(() => {
     const now = new Date();
     const endTime = new Date(now.getTime() + 5 * 60 * 60 * 1000); // 默认5小时后结束
 
@@ -92,6 +71,26 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
+
+  // 日期选择器临时状态
+  const [tempStartDate, setTempStartDate] = useState<Date | null>(null);
+  const [tempEndDate, setTempEndDate] = useState<Date | null>(null);
+
+  // 错误状态管理
+  const [fieldErrors, setFieldErrors] = useState<{
+    session: boolean;
+    location: boolean;
+    game: boolean;
+    stakes: boolean;
+    buyIn: boolean;
+  }>({
+    session: false,
+    location: false,
+    game: false,
+    stakes: false,
+    buyIn: false,
+  });
 
   // 自定义输入状态
   const [customLocation, setCustomLocation] = useState('');
@@ -132,12 +131,48 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
     {label: '自定义', value: 'Custom', isSpecial: true},
   ];
 
-  const updateSessionData = (updates: Partial<Session>) => {
-    setSessionData((prev: Session) => ({...prev, ...updates}));
+  const currencyOptionsData = [
+    {label: '人民币 ￥', value: '￥'},
+    {label: '美元 $', value: '$'},
+  ];
+
+  // 切换货币单位
+  const toggleCurrency = () => {
+    setShowCurrencyPicker(true);
+  };
+
+  const handleCurrencySelect = (newCurrency: string) => {
+    setCurrency(newCurrency as CurrencyType);
+    setShowCurrencyPicker(false);
+  };
+
+  // 清除字段错误状态
+  const clearFieldError = (field: keyof typeof fieldErrors) => {
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => ({...prev, [field]: false}));
+    }
+  };
+
+  // 验证必填字段并设置错误状态
+  const validateRequiredFields = () => {
+    const errors = {
+      session: !sessionData.sessionType.session,
+      location: !sessionData.sessionType.location,
+      game: !sessionData.sessionType.game,
+      stakes: !sessionData.sessionType.stakes,
+      buyIn: !sessionData.buyIn || sessionData.buyIn <= 0,
+    };
+
+    setFieldErrors(errors);
+    return !Object.values(errors).some(hasError => hasError);
+  };
+
+  const updateSessionData = (updates: Partial<NewSession>) => {
+    setSessionData((prev: NewSession) => ({...prev, ...updates}));
   };
 
   const updateSessionType = (updates: Partial<SessionType>) => {
-    setSessionData((prev: Session) => ({
+    setSessionData((prev: NewSession) => ({
       ...prev,
       sessionType: {...prev.sessionType, ...updates},
     }));
@@ -150,6 +185,9 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
       session: sessionValue,
       isTournament: sessionValue === 'Tournament',
     });
+    if (sessionValue) {
+      clearFieldError('session');
+    }
     setShowSessionPicker(false);
   };
 
@@ -163,6 +201,7 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
           onPress: text => {
             if (text) {
               updateSessionType({location: text});
+              clearFieldError('location');
             }
           },
         },
@@ -171,6 +210,7 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
       updateSessionType({location: ''});
     } else {
       updateSessionType({location});
+      clearFieldError('location');
     }
     setShowLocationPicker(false);
   };
@@ -184,6 +224,7 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
           onPress: text => {
             if (text) {
               updateSessionType({game: text});
+              clearFieldError('game');
             }
           },
         },
@@ -192,6 +233,7 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
       updateSessionType({game: ''});
     } else {
       updateSessionType({game});
+      clearFieldError('game');
     }
     setShowGamePicker(false);
   };
@@ -205,6 +247,7 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
           onPress: text => {
             if (text) {
               updateSessionType({stakes: text});
+              clearFieldError('stakes');
             }
           },
         },
@@ -213,8 +256,109 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
       updateSessionType({stakes: ''});
     } else {
       updateSessionType({stakes});
+      clearFieldError('stakes');
     }
     setShowStakesPicker(false);
+  };
+
+  // 改进的日期时间处理函数
+  const handleDateTimeChange = (
+    event: DateTimePickerEvent,
+    selectedDate: Date | undefined,
+    type: 'startDate' | 'startTime' | 'endDate' | 'endTime',
+  ) => {
+    if (Platform.OS === 'android') {
+      // Android平台处理
+      if (event.type === 'set' && selectedDate) {
+        applyDateTimeChange(selectedDate, type);
+      }
+      closeDateTimePicker(type);
+    } else {
+      // iOS平台处理 - 实时更新临时状态
+      if (event.type === 'set' && selectedDate) {
+        if (type === 'startDate' || type === 'startTime') {
+          setTempStartDate(selectedDate);
+        } else {
+          setTempEndDate(selectedDate);
+        }
+      }
+    }
+  };
+
+  const applyDateTimeChange = (
+    selectedDate: Date,
+    type: 'startDate' | 'startTime' | 'endDate' | 'endTime',
+  ) => {
+    try {
+      if (type === 'startDate') {
+        const newDateTime = new Date(selectedDate);
+        if (sessionData.startTime) {
+          newDateTime.setHours(sessionData.startTime.getHours());
+          newDateTime.setMinutes(sessionData.startTime.getMinutes());
+        }
+        newDateTime.setSeconds(0);
+        newDateTime.setMilliseconds(0);
+        updateSessionData({startTime: newDateTime});
+      } else if (type === 'startTime') {
+        const newDateTime = new Date(sessionData.startTime || new Date());
+        newDateTime.setHours(selectedDate.getHours());
+        newDateTime.setMinutes(selectedDate.getMinutes());
+        newDateTime.setSeconds(0);
+        newDateTime.setMilliseconds(0);
+        updateSessionData({startTime: newDateTime});
+      } else if (type === 'endDate') {
+        const newDateTime = new Date(selectedDate);
+        if (sessionData.endTime) {
+          newDateTime.setHours(sessionData.endTime.getHours());
+          newDateTime.setMinutes(sessionData.endTime.getMinutes());
+        }
+        newDateTime.setSeconds(0);
+        newDateTime.setMilliseconds(0);
+        updateSessionData({endTime: newDateTime});
+      } else if (type === 'endTime') {
+        const newDateTime = new Date(sessionData.endTime || new Date());
+        newDateTime.setHours(selectedDate.getHours());
+        newDateTime.setMinutes(selectedDate.getMinutes());
+        newDateTime.setSeconds(0);
+        newDateTime.setMilliseconds(0);
+        updateSessionData({endTime: newDateTime});
+      }
+    } catch (error) {
+      console.warn('Error updating date/time:', error);
+    }
+  };
+
+  const closeDateTimePicker = (
+    type: 'startDate' | 'startTime' | 'endDate' | 'endTime',
+  ) => {
+    switch (type) {
+      case 'startDate':
+        setShowStartDatePicker(false);
+        break;
+      case 'startTime':
+        setShowStartTimePicker(false);
+        break;
+      case 'endDate':
+        setShowEndDatePicker(false);
+        break;
+      case 'endTime':
+        setShowEndTimePicker(false);
+        break;
+    }
+    setTempStartDate(null);
+    setTempEndDate(null);
+  };
+
+  const confirmDateTimeChange = (
+    type: 'startDate' | 'startTime' | 'endDate' | 'endTime',
+  ) => {
+    if (Platform.OS === 'ios') {
+      const tempDate = type.includes('start') ? tempStartDate : tempEndDate;
+      if (tempDate) {
+        applyDateTimeChange(tempDate, type);
+      }
+    }
+    closeDateTimePicker(type);
   };
 
   const addTag = () => {
@@ -235,19 +379,32 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
 
   const handleSave = () => {
     // 验证必填字段
-    if (
-      !sessionData.sessionType.session ||
-      !sessionData.sessionType.location ||
-      !sessionData.sessionType.game ||
-      !sessionData.sessionType.stakes
-    ) {
-      Alert.alert('错误', '请填写所有必填字段');
+    if (!validateRequiredFields()) {
+      // 不需要Alert，错误状态已经在UI中显示
       return;
     }
 
     onSave(sessionData);
     onClose();
   };
+
+  // 重置表单和错误状态
+  const resetForm = () => {
+    setFieldErrors({
+      session: false,
+      location: false,
+      game: false,
+      stakes: false,
+      buyIn: false,
+    });
+  };
+
+  // 监听模态框打开状态，重置错误状态
+  React.useEffect(() => {
+    if (visible) {
+      resetForm();
+    }
+  }, [visible]);
 
   const formatDateTime = (date: Date) => {
     if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
@@ -278,244 +435,330 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
       visible={visible}
       onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
+        <Pressable
+          style={styles.backdrop}
+          onPress={() => {
+            resetForm();
+            onClose();
+          }}
+        />
         <View style={styles.container}>
           <View style={styles.dragIndicator} />
-          <Text style={styles.title}>New Session</Text>
+
+          {/* 标题栏 */}
+          <View style={styles.headerRow}>
+            <Text style={styles.title}>New Session</Text>
+          </View>
 
           <ScrollView
             style={styles.scrollView}
             showsVerticalScrollIndicator={false}>
             {/* Session */}
-            <View style={styles.formRow}>
+            <View
+              style={[
+                styles.compactFormRow,
+                fieldErrors.session && styles.errorRow,
+              ]}>
               <Icon
                 name="person"
                 size={24}
                 color="#9CA3AF"
-                style={styles.formIcon}
+                style={styles.compactIcon}
               />
-              <View style={styles.formContent}>
-                <Text style={styles.formLabel}>Session</Text>
-                <TouchableOpacity
-                  style={styles.selectButton}
-                  onPress={() => setShowSessionPicker(true)}>
-                  <Text
-                    style={[
-                      styles.selectText,
-                      sessionData.sessionType.session
-                        ? styles.selectedText
-                        : null,
-                    ]}>
-                    {sessionData.sessionType.session || 'Please select'}
-                  </Text>
-                  <Icon name="chevron-right" size={20} color="#9CA3AF" />
-                </TouchableOpacity>
-              </View>
+              <Text
+                style={[
+                  styles.compactLabel,
+                  fieldErrors.session && styles.errorLabel,
+                ]}>
+                Session
+              </Text>
+              <TouchableOpacity
+                style={styles.compactSelectButton}
+                onPress={() => setShowSessionPicker(true)}>
+                <Text
+                  style={[
+                    styles.compactSelectText,
+                    sessionData.sessionType.session
+                      ? styles.selectedText
+                      : null,
+                    fieldErrors.session && styles.errorText,
+                  ]}>
+                  {sessionData.sessionType.session || 'Please select'}
+                </Text>
+                <Icon name="chevron-right" size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+              {fieldErrors.session && (
+                <Text style={styles.compactErrorMessage}>
+                  请选择Session类型
+                </Text>
+              )}
             </View>
 
             {/* Location */}
-            <View style={styles.formRow}>
+            <View
+              style={[
+                styles.compactFormRow,
+                fieldErrors.location && styles.errorRow,
+              ]}>
               <Icon
                 name="location-on"
                 size={24}
                 color="#9CA3AF"
-                style={styles.formIcon}
+                style={styles.compactIcon}
               />
-              <View style={styles.formContent}>
-                <Text style={styles.formLabel}>Location</Text>
-                <TouchableOpacity
-                  style={styles.selectButton}
-                  onPress={() => setShowLocationPicker(true)}>
-                  <Text
-                    style={[
-                      styles.selectText,
-                      sessionData.sessionType.location
-                        ? styles.selectedText
-                        : null,
-                    ]}>
-                    {sessionData.sessionType.location || 'Please select'}
-                  </Text>
-                  <Icon name="chevron-right" size={20} color="#9CA3AF" />
-                </TouchableOpacity>
-              </View>
+              <Text
+                style={[
+                  styles.compactLabel,
+                  fieldErrors.location && styles.errorLabel,
+                ]}>
+                Location
+              </Text>
+              <TouchableOpacity
+                style={styles.compactSelectButton}
+                onPress={() => setShowLocationPicker(true)}>
+                <Text
+                  style={[
+                    styles.compactSelectText,
+                    sessionData.sessionType.location
+                      ? styles.selectedText
+                      : null,
+                    fieldErrors.location && styles.errorText,
+                  ]}>
+                  {sessionData.sessionType.location || 'Please select'}
+                </Text>
+                <Icon name="chevron-right" size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+              {fieldErrors.location && (
+                <Text style={styles.compactErrorMessage}>请选择游戏位置</Text>
+              )}
             </View>
 
             {/* Game */}
-            <View style={styles.formRow}>
+            <View
+              style={[
+                styles.compactFormRow,
+                fieldErrors.game && styles.errorRow,
+              ]}>
               <Icon
                 name="casino"
                 size={24}
                 color="#9CA3AF"
-                style={styles.formIcon}
+                style={styles.compactIcon}
               />
-              <View style={styles.formContent}>
-                <Text style={styles.formLabel}>Game</Text>
-                <TouchableOpacity
-                  style={styles.selectButton}
-                  onPress={() => setShowGamePicker(true)}>
-                  <Text
-                    style={[
-                      styles.selectText,
-                      sessionData.sessionType.game ? styles.selectedText : null,
-                    ]}>
-                    {sessionData.sessionType.game || 'Please select'}
-                  </Text>
-                  <Icon name="chevron-right" size={20} color="#9CA3AF" />
-                </TouchableOpacity>
-              </View>
+              <Text
+                style={[
+                  styles.compactLabel,
+                  fieldErrors.game && styles.errorLabel,
+                ]}>
+                Game
+              </Text>
+              <TouchableOpacity
+                style={styles.compactSelectButton}
+                onPress={() => setShowGamePicker(true)}>
+                <Text
+                  style={[
+                    styles.compactSelectText,
+                    sessionData.sessionType.game ? styles.selectedText : null,
+                    fieldErrors.game && styles.errorText,
+                  ]}>
+                  {sessionData.sessionType.game || 'Please select'}
+                </Text>
+                <Icon name="chevron-right" size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+              {fieldErrors.game && (
+                <Text style={styles.compactErrorMessage}>请选择游戏类型</Text>
+              )}
             </View>
 
             {/* Stakes */}
-            <View style={styles.formRow}>
+            <View
+              style={[
+                styles.compactFormRow,
+                fieldErrors.stakes && styles.errorRow,
+              ]}>
               <Icon
                 name="attach-money"
                 size={24}
                 color="#9CA3AF"
-                style={styles.formIcon}
+                style={styles.compactIcon}
               />
-              <View style={styles.formContent}>
-                <Text style={styles.formLabel}>Stakes</Text>
+              <Text
+                style={[
+                  styles.compactLabel,
+                  fieldErrors.stakes && styles.errorLabel,
+                ]}>
+                Stakes
+              </Text>
+              <TouchableOpacity
+                style={styles.compactSelectButton}
+                onPress={() => setShowStakesPicker(true)}>
+                <Text
+                  style={[
+                    styles.compactSelectText,
+                    sessionData.sessionType.stakes ? styles.selectedText : null,
+                    fieldErrors.stakes && styles.errorText,
+                  ]}>
+                  {sessionData.sessionType.stakes || 'Please select'}
+                </Text>
+                <Icon name="chevron-right" size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+              {fieldErrors.stakes && (
+                <Text style={styles.compactErrorMessage}>请选择游戏注额</Text>
+              )}
+            </View>
+
+            {/* Start */}
+            <View style={styles.compactFormRow}>
+              <Icon
+                name="schedule"
+                size={24}
+                color="#9CA3AF"
+                style={styles.compactIcon}
+              />
+              <Text style={styles.compactLabel}>Start</Text>
+              <View style={styles.compactDateTimeRow}>
                 <TouchableOpacity
-                  style={styles.selectButton}
-                  onPress={() => setShowStakesPicker(true)}>
-                  <Text
-                    style={[
-                      styles.selectText,
-                      sessionData.sessionType.stakes
-                        ? styles.selectedText
-                        : null,
-                    ]}>
-                    {sessionData.sessionType.stakes || 'Please select'}
+                  style={styles.compactDateButton}
+                  onPress={() => setShowStartDatePicker(true)}>
+                  <Text style={styles.compactDateText}>
+                    {formatDateTime(sessionData.startTime)}
                   </Text>
-                  <Icon name="chevron-right" size={20} color="#9CA3AF" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.compactTimeButton}
+                  onPress={() => setShowStartTimePicker(true)}>
+                  <Text style={styles.compactDateText}>
+                    {formatTime(sessionData.startTime)}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Start */}
-            <View style={styles.formRow}>
-              <Icon
-                name="schedule"
-                size={24}
-                color="#9CA3AF"
-                style={styles.formIcon}
-              />
-              <View style={styles.formContent}>
-                <Text style={styles.formLabel}>Start</Text>
-                <View style={styles.dateTimeRow}>
-                  <TouchableOpacity
-                    style={styles.dateButton}
-                    onPress={() => setShowStartDatePicker(true)}>
-                    <Text style={styles.dateText}>
-                      {formatDateTime(sessionData.startTime)}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.timeButton}
-                    onPress={() => setShowStartTimePicker(true)}>
-                    <Text style={styles.dateText}>
-                      {formatTime(sessionData.startTime)}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-
             {/* End */}
-            <View style={styles.formRow}>
+            <View style={styles.compactFormRow}>
               <Icon
                 name="schedule"
                 size={24}
                 color="#9CA3AF"
-                style={styles.formIcon}
+                style={styles.compactIcon}
               />
-              <View style={styles.formContent}>
-                <Text style={styles.formLabel}>End</Text>
-                <View style={styles.dateTimeRow}>
-                  <TouchableOpacity
-                    style={styles.dateButton}
-                    onPress={() => setShowEndDatePicker(true)}>
-                    <Text style={styles.dateText}>
-                      {formatDateTime(sessionData.endTime)}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.timeButton}
-                    onPress={() => setShowEndTimePicker(true)}>
-                    <Text style={styles.dateText}>
-                      {formatTime(sessionData.endTime)}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+              <Text style={styles.compactLabel}>End</Text>
+              <View style={styles.compactDateTimeRow}>
+                <TouchableOpacity
+                  style={styles.compactDateButton}
+                  onPress={() => setShowEndDatePicker(true)}>
+                  <Text style={styles.compactDateText}>
+                    {formatDateTime(sessionData.endTime)}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.compactTimeButton}
+                  onPress={() => setShowEndTimePicker(true)}>
+                  <Text style={styles.compactDateText}>
+                    {formatTime(sessionData.endTime)}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
 
             {/* Buy In & Cash Out */}
             <View style={styles.inputRow}>
               <View style={styles.inputHalf}>
-                <Text style={styles.inputTitle}>Buy In</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="$0"
-                  keyboardType="numeric"
-                  value={
-                    sessionData.buyIn > 0 ? sessionData.buyIn.toString() : ''
-                  }
-                  onChangeText={text =>
-                    updateSessionData({buyIn: Number(text) || 0})
-                  }
-                />
+                <Text
+                  style={[
+                    styles.inputTitle,
+                    fieldErrors.buyIn && styles.errorLabel,
+                  ]}>
+                  Buy In
+                </Text>
+                <View
+                  style={[
+                    styles.currencyInputContainer,
+                    fieldErrors.buyIn && styles.errorInputContainer,
+                  ]}>
+                  <Text style={styles.currencySymbol}>{currency}</Text>
+                  <TextInput
+                    style={[
+                      styles.currencyInput,
+                      fieldErrors.buyIn && styles.errorInput,
+                    ]}
+                    placeholder="0"
+                    keyboardType="numeric"
+                    value={
+                      sessionData.buyIn > 0 ? sessionData.buyIn.toString() : ''
+                    }
+                    onChangeText={text => {
+                      const amount = Number(text) || 0;
+                      updateSessionData({buyIn: amount});
+                      if (amount > 0) {
+                        clearFieldError('buyIn');
+                      }
+                    }}
+                  />
+                </View>
+                {fieldErrors.buyIn && (
+                  <Text style={styles.errorMessage}>请输入买入金额</Text>
+                )}
               </View>
               <View style={styles.inputHalf}>
                 <Text style={styles.inputTitle}>Cash Out</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="$0"
-                  keyboardType="numeric"
-                  value={
-                    sessionData.cashOut > 0
-                      ? sessionData.cashOut.toString()
-                      : ''
-                  }
-                  onChangeText={text =>
-                    updateSessionData({cashOut: Number(text) || 0})
-                  }
-                />
+                <View style={styles.currencyInputContainer}>
+                  <Text style={styles.currencySymbol}>{currency}</Text>
+                  <TextInput
+                    style={styles.currencyInput}
+                    placeholder="0"
+                    keyboardType="numeric"
+                    value={
+                      sessionData.cashOut > 0
+                        ? sessionData.cashOut.toString()
+                        : ''
+                    }
+                    onChangeText={text =>
+                      updateSessionData({cashOut: Number(text) || 0})
+                    }
+                  />
+                </View>
               </View>
             </View>
 
             {/* Rebuys / Top Offs */}
             <View style={styles.fullWidthInputContainer}>
               <Text style={styles.inputTitle}>Rebuys / Top Offs</Text>
-              <TextInput
-                style={styles.fullWidthInput}
-                placeholder="$0"
-                keyboardType="numeric"
-                value={
-                  sessionData.rebuys > 0 ? sessionData.rebuys.toString() : ''
-                }
-                onChangeText={text =>
-                  updateSessionData({rebuys: Number(text) || 0})
-                }
-              />
+              <View style={styles.currencyInputContainer}>
+                <Text style={styles.currencySymbol}>{currency}</Text>
+                <TextInput
+                  style={styles.currencyInput}
+                  placeholder="0"
+                  keyboardType="numeric"
+                  value={
+                    sessionData.rebuys > 0 ? sessionData.rebuys.toString() : ''
+                  }
+                  onChangeText={text =>
+                    updateSessionData({rebuys: Number(text) || 0})
+                  }
+                />
+              </View>
             </View>
 
             {/* Table Expenses */}
             <View style={styles.fullWidthInputContainer}>
               <Text style={styles.inputTitle}>Table Expenses (Rake, tips)</Text>
-              <TextInput
-                style={styles.fullWidthInput}
-                placeholder="$0"
-                keyboardType="numeric"
-                value={
-                  sessionData.tableExpenses > 0
-                    ? sessionData.tableExpenses.toString()
-                    : ''
-                }
-                onChangeText={text =>
-                  updateSessionData({tableExpenses: Number(text) || 0})
-                }
-              />
+              <View style={styles.currencyInputContainer}>
+                <Text style={styles.currencySymbol}>{currency}</Text>
+                <TextInput
+                  style={styles.currencyInput}
+                  placeholder="0"
+                  keyboardType="numeric"
+                  value={
+                    sessionData.tableExpenses > 0
+                      ? sessionData.tableExpenses.toString()
+                      : ''
+                  }
+                  onChangeText={text =>
+                    updateSessionData({tableExpenses: Number(text) || 0})
+                  }
+                />
+              </View>
             </View>
 
             {/* Notes */}
@@ -567,139 +810,160 @@ const AddSessionModal: React.FC<AddSessionModalProps> = ({
               <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
                 <Text style={styles.saveButtonText}>Save Session</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => {
+                  resetForm();
+                  onClose();
+                }}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
 
-          {/* Date Time Pickers - 平台特定配置 */}
+          {/* Date Time Pickers - 改进的交互 */}
           {showStartDatePicker && (
-            <DateTimePicker
-              value={sessionData.startTime || new Date()}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
-                if (Platform.OS === 'android') {
-                  setShowStartDatePicker(false);
-                }
-                if (event.type === 'set' && selectedDate) {
-                  try {
-                    // 保持原来的时间，只更新日期
-                    const newDateTime = new Date(selectedDate);
-                    if (sessionData.startTime) {
-                      newDateTime.setHours(sessionData.startTime.getHours());
-                      newDateTime.setMinutes(
-                        sessionData.startTime.getMinutes(),
-                      );
-                    }
-                    newDateTime.setSeconds(0);
-                    newDateTime.setMilliseconds(0);
-                    updateSessionData({startTime: newDateTime});
-                  } catch (error) {
-                    console.warn('Error updating start date:', error);
-                    updateSessionData({startTime: selectedDate});
+            <View style={styles.datePickerOverlay}>
+              <View style={styles.datePickerContainer}>
+                {Platform.OS === 'ios' && (
+                  <View style={styles.datePickerHeader}>
+                    <TouchableOpacity
+                      style={styles.datePickerButton}
+                      onPress={() => closeDateTimePicker('startDate')}>
+                      <Text style={styles.datePickerButtonText}>取消</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.datePickerTitle}>选择开始日期</Text>
+                    <TouchableOpacity
+                      style={styles.datePickerButton}
+                      onPress={() => confirmDateTimeChange('startDate')}>
+                      <Text
+                        style={[
+                          styles.datePickerButtonText,
+                          styles.confirmText,
+                        ]}>
+                        确认
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                <DateTimePicker
+                  value={tempStartDate || sessionData.startTime || new Date()}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(event: DateTimePickerEvent, selectedDate?: Date) =>
+                    handleDateTimeChange(event, selectedDate, 'startDate')
                   }
-                }
-                if (Platform.OS === 'ios') {
-                  setShowStartDatePicker(false);
-                }
-              }}
-            />
+                />
+              </View>
+            </View>
           )}
 
           {showStartTimePicker && (
-            <DateTimePicker
-              value={sessionData.startTime || new Date()}
-              mode="time"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
-                if (Platform.OS === 'android') {
-                  setShowStartTimePicker(false);
-                }
-                if (event.type === 'set' && selectedDate) {
-                  // 保持原来的日期，只更新时间
-                  try {
-                    const newDateTime = new Date(
-                      sessionData.startTime || new Date(),
-                    );
-                    newDateTime.setHours(selectedDate.getHours());
-                    newDateTime.setMinutes(selectedDate.getMinutes());
-                    newDateTime.setSeconds(0);
-                    newDateTime.setMilliseconds(0);
-                    updateSessionData({startTime: newDateTime});
-                  } catch (error) {
-                    console.warn('Error updating start time:', error);
+            <View style={styles.datePickerOverlay}>
+              <View style={styles.datePickerContainer}>
+                {Platform.OS === 'ios' && (
+                  <View style={styles.datePickerHeader}>
+                    <TouchableOpacity
+                      style={styles.datePickerButton}
+                      onPress={() => closeDateTimePicker('startTime')}>
+                      <Text style={styles.datePickerButtonText}>取消</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.datePickerTitle}>选择开始时间</Text>
+                    <TouchableOpacity
+                      style={styles.datePickerButton}
+                      onPress={() => confirmDateTimeChange('startTime')}>
+                      <Text
+                        style={[
+                          styles.datePickerButtonText,
+                          styles.confirmText,
+                        ]}>
+                        确认
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                <DateTimePicker
+                  value={tempStartDate || sessionData.startTime || new Date()}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(event: DateTimePickerEvent, selectedDate?: Date) =>
+                    handleDateTimeChange(event, selectedDate, 'startTime')
                   }
-                }
-                if (Platform.OS === 'ios') {
-                  setShowStartTimePicker(false);
-                }
-              }}
-            />
+                />
+              </View>
+            </View>
           )}
 
           {showEndDatePicker && (
-            <DateTimePicker
-              value={sessionData.endTime || new Date()}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
-                if (Platform.OS === 'android') {
-                  setShowEndDatePicker(false);
-                }
-                if (event.type === 'set' && selectedDate) {
-                  try {
-                    // 保持原来的时间，只更新日期
-                    const newDateTime = new Date(selectedDate);
-                    if (sessionData.endTime) {
-                      newDateTime.setHours(sessionData.endTime.getHours());
-                      newDateTime.setMinutes(sessionData.endTime.getMinutes());
-                    }
-                    newDateTime.setSeconds(0);
-                    newDateTime.setMilliseconds(0);
-                    updateSessionData({endTime: newDateTime});
-                  } catch (error) {
-                    console.warn('Error updating end date:', error);
-                    updateSessionData({endTime: selectedDate});
+            <View style={styles.datePickerOverlay}>
+              <View style={styles.datePickerContainer}>
+                {Platform.OS === 'ios' && (
+                  <View style={styles.datePickerHeader}>
+                    <TouchableOpacity
+                      style={styles.datePickerButton}
+                      onPress={() => closeDateTimePicker('endDate')}>
+                      <Text style={styles.datePickerButtonText}>取消</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.datePickerTitle}>选择结束日期</Text>
+                    <TouchableOpacity
+                      style={styles.datePickerButton}
+                      onPress={() => confirmDateTimeChange('endDate')}>
+                      <Text
+                        style={[
+                          styles.datePickerButtonText,
+                          styles.confirmText,
+                        ]}>
+                        确认
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                <DateTimePicker
+                  value={tempEndDate || sessionData.endTime || new Date()}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(event: DateTimePickerEvent, selectedDate?: Date) =>
+                    handleDateTimeChange(event, selectedDate, 'endDate')
                   }
-                }
-                if (Platform.OS === 'ios') {
-                  setShowEndDatePicker(false);
-                }
-              }}
-            />
+                />
+              </View>
+            </View>
           )}
 
           {showEndTimePicker && (
-            <DateTimePicker
-              value={sessionData.endTime || new Date()}
-              mode="time"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event: DateTimePickerEvent, selectedDate?: Date) => {
-                if (Platform.OS === 'android') {
-                  setShowEndTimePicker(false);
-                }
-                if (event.type === 'set' && selectedDate) {
-                  // 保持原来的日期，只更新时间
-                  try {
-                    const newDateTime = new Date(
-                      sessionData.endTime || new Date(),
-                    );
-                    newDateTime.setHours(selectedDate.getHours());
-                    newDateTime.setMinutes(selectedDate.getMinutes());
-                    newDateTime.setSeconds(0);
-                    newDateTime.setMilliseconds(0);
-                    updateSessionData({endTime: newDateTime});
-                  } catch (error) {
-                    console.warn('Error updating end time:', error);
+            <View style={styles.datePickerOverlay}>
+              <View style={styles.datePickerContainer}>
+                {Platform.OS === 'ios' && (
+                  <View style={styles.datePickerHeader}>
+                    <TouchableOpacity
+                      style={styles.datePickerButton}
+                      onPress={() => closeDateTimePicker('endTime')}>
+                      <Text style={styles.datePickerButtonText}>取消</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.datePickerTitle}>选择结束时间</Text>
+                    <TouchableOpacity
+                      style={styles.datePickerButton}
+                      onPress={() => confirmDateTimeChange('endTime')}>
+                      <Text
+                        style={[
+                          styles.datePickerButtonText,
+                          styles.confirmText,
+                        ]}>
+                        确认
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                <DateTimePicker
+                  value={tempEndDate || sessionData.endTime || new Date()}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(event: DateTimePickerEvent, selectedDate?: Date) =>
+                    handleDateTimeChange(event, selectedDate, 'endTime')
                   }
-                }
-                if (Platform.OS === 'ios') {
-                  setShowEndTimePicker(false);
-                }
-              }}
-            />
+                />
+              </View>
+            </View>
           )}
 
           {/* Option Modals */}
@@ -777,8 +1041,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: '#000000',
-    marginBottom: 24,
-    paddingHorizontal: 20,
   },
   scrollView: {
     flex: 1,
@@ -916,7 +1178,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginBottom: 40,
-    gap: 16,
+    gap: 8,
   },
   saveButton: {
     paddingVertical: 16,
@@ -940,6 +1202,197 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#EF4444',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  currencyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    gap: 6,
+  },
+  currencyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6366F1',
+  },
+  currencyInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    paddingLeft: 16,
+  },
+  currencySymbol: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+    minWidth: 20,
+  },
+  currencyInput: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    color: '#000000',
+  },
+  // 日期选择器相关样式
+  datePickerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  datePickerContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    margin: 20,
+    overflow: 'hidden',
+  },
+  datePickerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  datePickerButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  datePickerButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  datePickerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  confirmText: {
+    color: '#6366F1',
+  },
+  // 错误状态样式
+  errorLabel: {
+    color: '#EF4444',
+  },
+  errorSelectButton: {
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  errorText: {
+    color: '#EF4444',
+  },
+  errorMessage: {
+    fontSize: 12,
+    color: '#EF4444',
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  errorInputContainer: {
+    borderWidth: 1,
+    borderColor: '#EF4444',
+  },
+  errorInput: {
+    color: '#EF4444',
+  },
+  // 紧凑布局样式
+  compactFormRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+    marginBottom: 2,
+  },
+  compactIcon: {
+    width: 24,
+    marginRight: 16,
+  },
+  compactLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+    minWidth: 80,
+  },
+  compactSelectButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingLeft: 16,
+  },
+  compactSelectText: {
+    fontSize: 16,
+    color: '#9CA3AF',
+  },
+  compactErrorMessage: {
+    position: 'absolute',
+    bottom: -16,
+    left: 120,
+    fontSize: 12,
+    color: '#EF4444',
+  },
+  errorRow: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
+    borderRadius: 8,
+    marginHorizontal: -8,
+    marginVertical: 4,
+    paddingHorizontal: 8,
+    shadowColor: '#EF4444',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  // 紧凑日期时间选择器样式
+  compactDateTimeRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  compactDateButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 6,
+    minWidth: 100,
+  },
+  compactTimeButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 6,
+    minWidth: 60,
+  },
+  compactDateText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#000000',
+    textAlign: 'center',
   },
 });
 

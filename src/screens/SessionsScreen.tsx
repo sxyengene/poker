@@ -6,83 +6,53 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
-  FlatList,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-
-// 模拟会话数据
-const sessionData = [
-  {
-    id: '1',
-    date: '2024-06-20',
-    time: '18:30',
-    location: 'Crown Casino',
-    duration: '4h 30m',
-    profit: 3000,
-    buyin: 1000,
-    cashout: 4000,
-    blinds: '2/5',
-    gameType: "NL Hold'em",
-  },
-  {
-    id: '2',
-    date: '2024-06-18',
-    time: '20:00',
-    location: 'Star City',
-    duration: '6h 15m',
-    profit: 1200,
-    buyin: 800,
-    cashout: 2000,
-    blinds: '1/3',
-    gameType: "NL Hold'em",
-  },
-  {
-    id: '3',
-    date: '2024-06-15',
-    time: '19:45',
-    location: 'Private Game',
-    duration: '3h 20m',
-    profit: -500,
-    buyin: 500,
-    cashout: 0,
-    blinds: '1/2',
-    gameType: "NL Hold'em",
-  },
-  {
-    id: '4',
-    date: '2024-06-12',
-    time: '21:15',
-    location: 'Crown Casino',
-    duration: '5h 45m',
-    profit: 800,
-    buyin: 600,
-    cashout: 1400,
-    blinds: '2/5',
-    gameType: "NL Hold'em",
-  },
-  {
-    id: '5',
-    date: '2024-06-10',
-    time: '17:30',
-    location: 'Online',
-    duration: '2h 30m',
-    profit: -200,
-    buyin: 300,
-    cashout: 100,
-    blinds: '0.5/1',
-    gameType: "NL Hold'em",
-  },
-];
+import {useSessions} from '../hooks/useSessions';
 
 const SessionsScreen = () => {
-  const sessions = [
-    {id: 1, profit: 3000, date: '2024-01-15', location: 'Wynn Las Vegas'},
-    {id: 2, profit: -500, date: '2024-01-10', location: 'Bellagio'},
-    {id: 3, profit: 800, date: '2024-01-08', location: 'Aria'},
-    {id: 4, profit: 1200, date: '2024-01-05', location: 'MGM Grand'},
-    {id: 5, profit: -300, date: '2024-01-03', location: 'Caesars Palace'},
-  ];
+  const {sessions, loading, error, deleteSession, refresh} = useSessions();
+
+  const handleDeleteSession = (sessionId: string) => {
+    Alert.alert('删除会话', '确定要删除这个会话吗？此操作无法撤销。', [
+      {
+        text: '取消',
+        style: 'cancel',
+      },
+      {
+        text: '删除',
+        style: 'destructive',
+        onPress: () => deleteSession(sessionId),
+      },
+    ]);
+  };
+
+  const handleRefresh = () => {
+    refresh();
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>加载中...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Icon name="error-outline" size={48} color="#F44336" />
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
+          <Text style={styles.retryButtonText}>重试</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -92,8 +62,8 @@ const SessionsScreen = () => {
       <View style={styles.header}>
         <Text style={styles.title}>All Sessions</Text>
         <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Icon name="account-balance-wallet" size={24} color="#6B7280" />
+          <TouchableOpacity style={styles.iconButton} onPress={handleRefresh}>
+            <Icon name="refresh" size={24} color="#6B7280" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton}>
             <Icon name="tune" size={24} color="#6B7280" />
@@ -102,33 +72,49 @@ const SessionsScreen = () => {
       </View>
 
       {/* 会话列表 */}
-      <ScrollView
-        style={styles.sessionsList}
-        contentContainerStyle={styles.sessionsListContent}
-        showsVerticalScrollIndicator={false}>
-        {sessions.map(session => (
-          <TouchableOpacity key={session.id} style={styles.sessionItem}>
-            <View style={styles.sessionContent}>
-              <Text style={styles.sessionId}>{session.id}</Text>
-              <View style={styles.sessionDetails}>
-                <Text style={styles.sessionLocation}>{session.location}</Text>
-                <Text style={styles.sessionDate}>{session.date}</Text>
+      {sessions.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Icon name="event-note" size={64} color="#9CA3AF" />
+          <Text style={styles.emptyTitle}>还没有会话记录</Text>
+          <Text style={styles.emptySubtitle}>
+            点击 + 按钮添加你的第一个扑克会话
+          </Text>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.sessionsList}
+          contentContainerStyle={styles.sessionsListContent}
+          showsVerticalScrollIndicator={false}>
+          {sessions.map((session, index) => (
+            <TouchableOpacity
+              key={session.id}
+              style={styles.sessionItem}
+              onLongPress={() => handleDeleteSession(session.id)}>
+              <View style={styles.sessionContent}>
+                <Text style={styles.sessionId}>{index + 1}</Text>
+                <View style={styles.sessionDetails}>
+                  <Text style={styles.sessionLocation}>{session.location}</Text>
+                  <Text style={styles.sessionDate}>{session.date}</Text>
+                  <Text style={styles.sessionGameInfo}>
+                    {session.gameType} • {session.blinds} • {session.duration}
+                  </Text>
+                </View>
+                <View style={styles.profitContainer}>
+                  <Text
+                    style={[
+                      styles.profitText,
+                      {color: session.profit >= 0 ? '#4CAF50' : '#F44336'},
+                    ]}>
+                    {session.profit >= 0 ? '+' : ''}￥
+                    {session.profit.toLocaleString()}
+                  </Text>
+                  <Icon name="chevron-right" size={24} color="#666" />
+                </View>
               </View>
-              <View style={styles.profitContainer}>
-                <Text
-                  style={[
-                    styles.profitText,
-                    {color: session.profit >= 0 ? '#4CAF50' : '#F44336'},
-                  ]}>
-                  {session.profit >= 0 ? '+' : ''}$
-                  {session.profit.toLocaleString()}
-                </Text>
-                <Icon name="chevron-right" size={24} color="#666" />
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 };
@@ -138,6 +124,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
     paddingTop: 60,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -151,14 +141,13 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     color: '#000',
-    paddingHorizontal: 20,
-    marginBottom: 20,
   },
   headerIcons: {
     flexDirection: 'row',
   },
   iconButton: {
     marginLeft: 16,
+    padding: 8,
   },
   sessionsList: {
     flex: 1,
@@ -201,6 +190,11 @@ const styles = StyleSheet.create({
   sessionDate: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 2,
+  },
+  sessionGameInfo: {
+    fontSize: 12,
+    color: '#9CA3AF',
   },
   profitContainer: {
     flexDirection: 'row',
@@ -210,6 +204,48 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginRight: 8,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#374151',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  errorText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#F44336',
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
