@@ -8,12 +8,15 @@ import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import TabNavigator from './src/navigation/TabNavigator';
+import {SessionsProvider} from './src/contexts/SessionsContext';
 
 function App(): React.JSX.Element {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <TabNavigator />
+        <SessionsProvider>
+          <TabNavigator />
+        </SessionsProvider>
       </NavigationContainer>
     </SafeAreaProvider>
   );

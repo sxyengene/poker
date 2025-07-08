@@ -11,8 +11,11 @@ import {
   Switch,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import {useSessions} from '../contexts/SessionsContext';
+import {NewSession} from '../types/session';
 
 export default function AddSessionScreen() {
+  const {addSession} = useSessions();
   const [activeTab, setActiveTab] = useState('live'); // 'live', 'completed', 'transaction'
   const [liveSession, setLiveSession] = useState({
     location: '',
@@ -74,7 +77,7 @@ export default function AddSessionScreen() {
     ]);
   };
 
-  const saveCompletedSession = () => {
+  const saveCompletedSession = async () => {
     if (
       !completedSession.location ||
       !completedSession.buyin ||
@@ -84,19 +87,41 @@ export default function AddSessionScreen() {
       return;
     }
 
-    Alert.alert('保存成功', '会话记录已添加');
-    // 重置表单
-    setCompletedSession({
-      location: '',
-      date: '',
-      startTime: '',
-      endTime: '',
-      buyin: '',
-      cashout: '',
-      blinds: '',
-      gameType: "NL Hold'em",
-      notes: '',
-    });
+    try {
+      // 构造新会话数据
+      const newSession: NewSession = {
+        sessionType: {
+          location: completedSession.location,
+          stakes: completedSession.blinds || '1/3',
+          game: completedSession.gameType,
+        },
+        startTime: new Date(),
+        endTime: new Date(),
+        buyIn: parseFloat(completedSession.buyin) || 0,
+        cashOut: parseFloat(completedSession.cashout) || 0,
+        rebuys: 0,
+        tableExpenses: 0,
+        notes: completedSession.notes,
+        tags: [],
+      };
+
+      await addSession(newSession);
+
+      // 重置表单
+      setCompletedSession({
+        location: '',
+        date: '',
+        startTime: '',
+        endTime: '',
+        buyin: '',
+        cashout: '',
+        blinds: '',
+        gameType: "NL Hold'em",
+        notes: '',
+      });
+    } catch (error) {
+      Alert.alert('错误', '保存会话失败，请重试');
+    }
   };
 
   const saveTransaction = () => {

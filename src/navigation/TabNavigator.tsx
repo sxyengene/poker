@@ -21,7 +21,7 @@ import SettingsScreen from '../screens/SettingsScreen';
 import AddSessionModal from '../components/AddSessionModal';
 import OptionModal from '../components/OptionModal';
 import {useTabBarHeight} from '../hooks/useTabBarHeight';
-import {useSessions} from '../hooks/useSessions';
+import {useSessions} from '../contexts/SessionsContext';
 import {NewSession} from '../types/session';
 
 const Tab = createBottomTabNavigator();

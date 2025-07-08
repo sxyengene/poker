@@ -10,21 +10,72 @@ import {
 import {LineChart} from 'react-native-chart-kit';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import {useSessions} from '../contexts/SessionsContext';
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function HomeScreen() {
-  // 模拟数据
-  const bankrollData = {
-    labels: ['5月31日', '6月7日', '6月14日', '6月21日', '6月28日', '今日'],
-    datasets: [
-      {
-        data: [0, 3000, 7000, 12000, 16000, 20000],
-        color: (opacity = 1) => `rgba(34, 197, 94, ${opacity})`, // 绿色
-        strokeWidth: 3,
-      },
-    ],
+  const {sessions, getStats} = useSessions();
+  const stats = getStats();
+
+  // 生成图表数据
+  const generateChartData = () => {
+    if (sessions.length === 0) {
+      return {
+        labels: ['无数据'],
+        datasets: [
+          {
+            data: [0],
+            color: (opacity = 1) => `rgba(34, 197, 94, ${opacity})`,
+            strokeWidth: 3,
+          },
+        ],
+      };
+    }
+
+    // 按日期排序会话，计算累计盈利
+    const sortedSessions = [...sessions].sort(
+      (a, b) =>
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+    );
+
+    let cumulativeProfit = 0;
+    const chartData = sortedSessions.slice(-6).map(session => {
+      cumulativeProfit += session.profit;
+      return {
+        date: new Date(session.startTime).toLocaleDateString('zh-CN', {
+          month: 'short',
+          day: 'numeric',
+        }),
+        profit: cumulativeProfit,
+      };
+    });
+
+    return {
+      labels: chartData.length > 0 ? chartData.map(d => d.date) : ['无数据'],
+      datasets: [
+        {
+          data: chartData.length > 0 ? chartData.map(d => d.profit) : [0],
+          color: (opacity = 1) => `rgba(34, 197, 94, ${opacity})`,
+          strokeWidth: 3,
+        },
+      ],
+    };
   };
+
+  const bankrollData = generateChartData();
+
+  // 计算总游戏时长（小时）
+  const totalHours = sessions.reduce((total, session) => {
+    const duration = session.duration;
+    const match = duration.match(/(\d+)h\s*(\d+)m/);
+    if (match) {
+      const hours = parseInt(match[1], 10);
+      const minutes = parseInt(match[2], 10);
+      return total + hours + minutes / 60;
+    }
+    return total;
+  }, 0);
 
   return (
     <View style={styles.container}>
@@ -41,10 +92,22 @@ export default function HomeScreen() {
               <Text style={styles.titleText}>我的资金 </Text>
               <Icon name="info-outline" size={16} color="#9CA3AF" />
             </View>
-            <Text style={styles.amountText}>¥20,000</Text>
+            <Text style={styles.amountText}>
+              ¥{stats.totalProfit.toLocaleString()}
+            </Text>
             <View style={styles.changeRow}>
-              <Icon name="trending-up" size={16} color="#22C55E" />
-              <Text style={styles.changeText}>自5月31日以来增长 ¥20,000</Text>
+              <Icon
+                name={stats.totalProfit >= 0 ? 'trending-up' : 'trending-down'}
+                size={16}
+                color={stats.totalProfit >= 0 ? '#22C55E' : '#F44336'}
+              />
+              <Text
+                style={[
+                  styles.changeText,
+                  {color: stats.totalProfit >= 0 ? '#22C55E' : '#F44336'},
+                ]}>
+                总盈利 ¥{stats.totalProfit.toLocaleString()}
+              </Text>
             </View>
           </View>
         </View>
@@ -53,11 +116,13 @@ export default function HomeScreen() {
         <View style={styles.metricsContainer}>
           <View style={styles.metricCard}>
             <Text style={styles.metricLabel}>总盈利</Text>
-            <Text style={styles.metricValue}>¥2万</Text>
+            <Text style={styles.metricValue}>
+              ¥{(stats.totalProfit / 10000).toFixed(1)}万
+            </Text>
           </View>
           <View style={styles.metricCard}>
             <Text style={styles.metricLabel}>游戏时长</Text>
-            <Text style={styles.metricValue}>63小时</Text>
+            <Text style={styles.metricValue}>{Math.round(totalHours)}小时</Text>
           </View>
         </View>
 

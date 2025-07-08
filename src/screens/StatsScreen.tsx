@@ -11,26 +11,63 @@ import {
 } from 'react-native';
 import {LineChart} from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import {useSessions} from '../contexts/SessionsContext';
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function StatsScreen() {
+  const {sessions, getStats} = useSessions();
+  const stats = getStats();
   const [selectedPeriod, setSelectedPeriod] = useState('All');
 
   // 时间筛选器选项
   const periodOptions = ['All', '1M', '3M', '6M', '1Y', 'YTD'];
 
-  // Player Profit 数据
-  const playerProfitData = {
-    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
-    datasets: [
-      {
-        data: [0, 3000, 7000, 12000, 16000, 20000],
-        color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`, // 蓝色
-        strokeWidth: 3,
-      },
-    ],
+  // 生成Player Profit数据
+  const generatePlayerProfitData = () => {
+    if (sessions.length === 0) {
+      return {
+        labels: ['无数据'],
+        datasets: [
+          {
+            data: [0],
+            color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
+            strokeWidth: 3,
+          },
+        ],
+      };
+    }
+
+    // 按日期排序会话，计算累计盈利
+    const sortedSessions = [...sessions].sort(
+      (a, b) =>
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+    );
+
+    let cumulativeProfit = 0;
+    const chartData = sortedSessions.slice(-6).map(session => {
+      cumulativeProfit += session.profit;
+      return {
+        date: new Date(session.startTime).toLocaleDateString('zh-CN', {
+          month: 'short',
+        }),
+        profit: cumulativeProfit,
+      };
+    });
+
+    return {
+      labels: chartData.length > 0 ? chartData.map(d => d.date) : ['无数据'],
+      datasets: [
+        {
+          data: chartData.length > 0 ? chartData.map(d => d.profit) : [0],
+          color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
+          strokeWidth: 3,
+        },
+      ],
+    };
   };
+
+  const playerProfitData = generatePlayerProfitData();
 
   const handlePeriodSelect = (period: string) => {
     setSelectedPeriod(period);
@@ -40,8 +77,9 @@ export default function StatsScreen() {
   const handleChartLongPress = () => {
     Alert.alert(
       '图表详细信息',
-      'Tap and hold charts for more info.\n\n当前收益: US$3,000\n时间范围: ' +
-        selectedPeriod,
+      `Tap and hold charts for more info.\n\n当前收益: ¥${stats.totalProfit.toLocaleString()}\n会话数量: ${
+        stats.totalSessions
+      }\n胜率: ${stats.winRate}%\n时间范围: ${selectedPeriod}`,
       [{text: '确定', style: 'default'}],
     );
   };
@@ -92,7 +130,9 @@ export default function StatsScreen() {
                 <Icon name="chevron-right" size={16} color="#6B7280" />
               </TouchableOpacity>
             </View>
-            <Text style={styles.profitAmount}>¥20,000</Text>
+            <Text style={styles.profitAmount}>
+              ¥{stats.totalProfit.toLocaleString()}
+            </Text>
           </View>
 
           {/* 折线图 */}
@@ -129,9 +169,15 @@ export default function StatsScreen() {
             />
             {/* 右侧Y轴标签 */}
             <View style={styles.yAxisLabels}>
-              <Text style={styles.yAxisLabel}>¥2万</Text>
-              <Text style={styles.yAxisLabel}>¥1.5万</Text>
-              <Text style={styles.yAxisLabel}>¥1万</Text>
+              <Text style={styles.yAxisLabel}>
+                ¥{Math.round((stats.totalProfit / 10000) * 1.5)}万
+              </Text>
+              <Text style={styles.yAxisLabel}>
+                ¥{Math.round((stats.totalProfit / 10000) * 1.1)}万
+              </Text>
+              <Text style={styles.yAxisLabel}>
+                ¥{Math.round((stats.totalProfit / 10000) * 0.7)}万
+              </Text>
               <Text style={styles.yAxisLabel}>¥0</Text>
             </View>
           </TouchableOpacity>

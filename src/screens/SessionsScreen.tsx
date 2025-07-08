@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,32 @@ import {
   StatusBar,
   Alert,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {useSessions} from '../hooks/useSessions';
+import {useSessions} from '../contexts/SessionsContext';
+import FilterModal, {FilterOptions} from '../components/FilterModal';
+import OptionPanel from '../components/OptionPanel';
+import {findNodeHandle} from 'react-native';
 
 const SessionsScreen = () => {
-  const {sessions, loading, error, deleteSession, refresh} = useSessions();
+  const {
+    sessions,
+    loading,
+    error,
+    deleteSession,
+    filters,
+    availableLocations,
+    availableGameTypes,
+    availableStakes,
+    availableTags,
+    applyFilters,
+  } = useSessions();
+
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const filterBtnRef = React.useRef<TouchableOpacity>(null);
+  const [optionPanelVisible, setOptionPanelVisible] = useState(false);
+  const [optionPanelPos, setOptionPanelPos] = useState({top: 80, right: 20});
 
   const handleDeleteSession = (sessionId: string) => {
     Alert.alert('删除会话', '确定要删除这个会话吗？此操作无法撤销。', [
@@ -29,8 +49,74 @@ const SessionsScreen = () => {
     ]);
   };
 
-  const handleRefresh = () => {
-    refresh();
+  const handleFilterPress = () => {
+    if (filterBtnRef.current) {
+      filterBtnRef.current.measureInWindow((x, y, width, height) => {
+        // 右对齐，top 在按钮底部 8px
+        setOptionPanelPos({
+          top: y + height + 8,
+          right: Dimensions.get('window').width - (x + width),
+        });
+        setOptionPanelVisible(true);
+      });
+    } else {
+      setOptionPanelVisible(true);
+    }
+  };
+
+  const handleApplyFilters = (newFilters: FilterOptions) => {
+    applyFilters(newFilters);
+  };
+
+  const handleSessionTypeSelect = (value: string) => {
+    const newSessionType = value as 'All' | 'Cash Game' | 'Tournament';
+    const finalSessionType =
+      filters.sessionType === newSessionType ? 'All' : newSessionType;
+    applyFilters({...filters, sessionType: finalSessionType});
+  };
+
+  const handleLocationSelect = (value: string) => {
+    const newValues = [...filters.location];
+    const index = newValues.indexOf(value);
+    if (index > -1) {
+      newValues.splice(index, 1);
+    } else {
+      newValues.push(value);
+    }
+    applyFilters({...filters, location: newValues});
+  };
+
+  const handleGameTypeSelect = (value: string) => {
+    const newValues = [...filters.gameType];
+    const index = newValues.indexOf(value);
+    if (index > -1) {
+      newValues.splice(index, 1);
+    } else {
+      newValues.push(value);
+    }
+    applyFilters({...filters, gameType: newValues});
+  };
+
+  const handleStakesSelect = (value: string) => {
+    const newValues = [...filters.stakes];
+    const index = newValues.indexOf(value);
+    if (index > -1) {
+      newValues.splice(index, 1);
+    } else {
+      newValues.push(value);
+    }
+    applyFilters({...filters, stakes: newValues});
+  };
+
+  const handleTagsSelect = (value: string) => {
+    const newValues = [...filters.tags];
+    const index = newValues.indexOf(value);
+    if (index > -1) {
+      newValues.splice(index, 1);
+    } else {
+      newValues.push(value);
+    }
+    applyFilters({...filters, tags: newValues});
   };
 
   if (loading) {
@@ -47,9 +133,6 @@ const SessionsScreen = () => {
       <View style={[styles.container, styles.centerContent]}>
         <Icon name="error-outline" size={48} color="#F44336" />
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
-          <Text style={styles.retryButtonText}>重试</Text>
-        </TouchableOpacity>
       </View>
     );
   }
@@ -62,10 +145,10 @@ const SessionsScreen = () => {
       <View style={styles.header}>
         <Text style={styles.title}>All Sessions</Text>
         <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton} onPress={handleRefresh}>
-            <Icon name="refresh" size={24} color="#6B7280" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity
+            ref={filterBtnRef}
+            style={styles.iconButton}
+            onPress={handleFilterPress}>
             <Icon name="tune" size={24} color="#6B7280" />
           </TouchableOpacity>
         </View>
@@ -115,6 +198,69 @@ const SessionsScreen = () => {
           ))}
         </ScrollView>
       )}
+
+      {/* Filter Modal */}
+      <FilterModal
+        visible={filterModalVisible}
+        onClose={() => setFilterModalVisible(false)}
+        onApplyFilters={handleApplyFilters}
+        currentFilters={filters}
+        availableLocations={availableLocations}
+        availableGameTypes={availableGameTypes}
+        availableStakes={availableStakes}
+        availableTags={availableTags}
+      />
+      <OptionPanel
+        visible={optionPanelVisible}
+        top={optionPanelPos.top}
+        right={optionPanelPos.right}
+        onRequestClose={() => setOptionPanelVisible(false)}
+        accordionSingleOpen={true}
+        sessionTypeOptions={[
+          {
+            label: '全部',
+            value: 'All',
+            isSelected: filters.sessionType === 'All',
+          },
+          {
+            label: '现金局',
+            value: 'Cash Game',
+            isSelected: filters.sessionType === 'Cash Game',
+          },
+          {
+            label: '锦标赛',
+            value: 'Tournament',
+            isSelected: filters.sessionType === 'Tournament',
+          },
+        ]}
+        bankrollOptions={[]}
+        locationOptions={availableLocations.map(loc => ({
+          label: loc,
+          value: loc,
+          isSelected: filters.location.includes(loc),
+        }))}
+        gameTypeOptions={availableGameTypes.map(gt => ({
+          label: gt,
+          value: gt,
+          isSelected: filters.gameType.includes(gt),
+        }))}
+        stakesOptions={availableStakes.map(stake => ({
+          label: stake,
+          value: stake,
+          isSelected: filters.stakes.includes(stake),
+        }))}
+        tagsOptions={availableTags.map(tag => ({
+          label: tag,
+          value: tag,
+          isSelected: filters.tags.includes(tag),
+        }))}
+        onSessionTypeSelect={handleSessionTypeSelect}
+        onBankrollSelect={() => {}}
+        onLocationSelect={handleLocationSelect}
+        onGameTypeSelect={handleGameTypeSelect}
+        onStakesSelect={handleStakesSelect}
+        onTagsSelect={handleTagsSelect}
+      />
     </View>
   );
 };
