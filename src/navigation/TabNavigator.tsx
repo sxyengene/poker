@@ -98,13 +98,18 @@ const TabNavigator = () => {
           tabBarStyle: styles.tabBar,
           tabBarActiveTintColor: '#007AFF',
           tabBarInactiveTintColor: '#6B7280',
+          tabBarIconStyle: {
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100%',
+          },
         }}>
         <Tab.Screen
           name="Home"
           component={HomeScreen}
           options={{
             tabBarIcon: ({color, size}) => (
-              <Icon name="home" size={24} color={color} />
+              <Icon name="home" size={28} color={color} />
             ),
           }}
         />
@@ -113,7 +118,7 @@ const TabNavigator = () => {
           component={SessionsScreen}
           options={{
             tabBarIcon: ({color, size}) => (
-              <Icon name="list" size={24} color={color} />
+              <Icon name="list" size={28} color={color} />
             ),
           }}
         />
@@ -122,7 +127,7 @@ const TabNavigator = () => {
           component={AddSessionScreen}
           options={{
             tabBarIcon: ({color, size}) => (
-              <Icon name="add" size={24} color="#6B7280" />
+              <Icon name="add" size={28} color="#6B7280" />
             ),
             tabBarButton: props => (
               <CustomTabButton {...props} onPress={handleAddPress} />
@@ -134,7 +139,7 @@ const TabNavigator = () => {
           component={StatsScreen}
           options={{
             tabBarIcon: ({color, size}) => (
-              <Icon name="bar-chart" size={24} color={color} />
+              <Icon name="bar-chart" size={28} color={color} />
             ),
           }}
         />
@@ -143,7 +148,7 @@ const TabNavigator = () => {
           component={SettingsScreen}
           options={{
             tabBarIcon: ({color, size}) => (
-              <Icon name="settings" size={24} color={color} />
+              <Icon name="settings" size={28} color={color} />
             ),
           }}
         />
