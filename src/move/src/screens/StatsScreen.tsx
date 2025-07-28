@@ -1,0 +1,371 @@
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  StatusBar,
+  Dimensions,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import {useSessions} from '../contexts/SessionsContext';
+import SimpleLineChart from '../components/common/SimpleLineChart';
+
+const screenWidth = Dimensions.get('window').width;
+
+export default function StatsScreen() {
+  const {sessions, getStats} = useSessions();
+  const [stats, setStats] = useState({
+    totalProfit: 0,
+    totalSessions: 0,
+    winRate: 0,
+    averageProfit: 0,
+  });
+  const [selectedPeriod, setSelectedPeriod] = useState('All');
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const statsData = await getStats();
+        setStats(statsData);
+      } catch (error) {
+        console.error('加载统计数据失败:', error);
+      }
+    };
+    loadStats();
+  }, [sessions, getStats]);
+
+  // 时间筛选器选项
+  const periodOptions = ['All', '1M', '3M', '6M', '1Y', 'YTD'];
+
+  // 生成Player Profit数据
+  const generatePlayerProfitData = () => {
+    if (sessions.length === 0) {
+      return [0];
+    }
+
+    // 按日期排序会话，计算累计盈利
+    const sortedSessions = [...sessions].sort(
+      (a, b) =>
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+    );
+
+    let cumulativeProfit = 0;
+    const chartData = sortedSessions.slice(-6).map(session => {
+      cumulativeProfit += session.profit;
+      return cumulativeProfit;
+    });
+
+    return chartData.length > 0 ? chartData : [0];
+  };
+
+  const playerProfitData = generatePlayerProfitData();
+
+  const handlePeriodSelect = (period: string) => {
+    setSelectedPeriod(period);
+    // 这里可以根据选择的时间段更新数据
+  };
+
+  const handleChartLongPress = () => {
+    Alert.alert(
+      '图表详细信息',
+      `Tap and hold charts for more info.\n\n当前收益: ¥${stats.totalProfit.toLocaleString()}\n会话数量: ${
+        stats.totalSessions
+      }\n胜率: ${stats.winRate}%\n时间范围: ${selectedPeriod}`,
+      [{text: '确定', style: 'default'}],
+    );
+  };
+
+  const handleHealthDataAccess = () => {
+    Alert.alert(
+      'Health Data Access',
+      'Allow access to health data from iOS Settings to track mindfulness and wellness during gaming sessions.',
+      [
+        {text: '取消', style: 'cancel'},
+        {text: '前往设置', style: 'default'},
+      ],
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}>
+        {/* 标题 */}
+        <View style={styles.header}>
+          <Text style={styles.title}>数据指标</Text>
+        </View>
+
+        {/* 提示卡片 */}
+        <View style={styles.tipCard}>
+          <Icon name="lightbulb-outline" size={20} color="#F59E0B" />
+          <View style={styles.tipTextContainer}>
+            <Text style={styles.tipText}>
+              在这里追踪您的表现。{'\n'}
+              长按图表获取更多信息。
+            </Text>
+          </View>
+        </View>
+
+        {/* Player Profit 卡片 */}
+        <View style={styles.profitCard}>
+          <View style={styles.profitHeader}>
+            <View style={styles.profitTitleContainer}>
+              <Text style={styles.profitTitle}>玩家盈利</Text>
+              <TouchableOpacity style={styles.allButton}>
+                <Icon name="open-in-full" size={16} color="#6B7280" />
+                <Text style={styles.allButtonText}>全部</Text>
+                <Icon name="chevron-right" size={16} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.profitAmount}>
+              ¥{stats.totalProfit.toLocaleString()}
+            </Text>
+          </View>
+
+          {/* 折线图 */}
+          <TouchableOpacity
+            style={styles.chartArea}
+            onLongPress={handleChartLongPress}
+            activeOpacity={0.8}>
+            <SimpleLineChart
+              data={playerProfitData}
+              width={screenWidth - 64}
+              height={200}
+              color="#3B82F6"
+              strokeWidth={3}
+            />
+            {/* 右侧Y轴标签 */}
+            <View style={styles.yAxisLabels}>
+              <Text style={styles.yAxisLabel}>
+                ¥{Math.round((stats.totalProfit / 10000) * 1.5)}万
+              </Text>
+              <Text style={styles.yAxisLabel}>
+                ¥{Math.round((stats.totalProfit / 10000) * 1.1)}万
+              </Text>
+              <Text style={styles.yAxisLabel}>
+                ¥{Math.round((stats.totalProfit / 10000) * 0.7)}万
+              </Text>
+              <Text style={styles.yAxisLabel}>¥0</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* 时间筛选器 */}
+          <View style={styles.periodSelector}>
+            {periodOptions.map(period => (
+              <TouchableOpacity
+                key={period}
+                style={[
+                  styles.periodButton,
+                  selectedPeriod === period && styles.periodButtonActive,
+                ]}
+                onPress={() => handlePeriodSelect(period)}>
+                <Text
+                  style={[
+                    styles.periodButtonText,
+                    selectedPeriod === period && styles.periodButtonTextActive,
+                  ]}>
+                  {period}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={styles.expandButton}>
+              <Icon name="open-in-full" size={16} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* 健康数据访问提示 */}
+        <TouchableOpacity
+          style={styles.healthCard}
+          onPress={handleHealthDataAccess}>
+          <View style={styles.healthIcon}>
+            <Icon name="favorite" size={20} color="#10B981" />
+          </View>
+          <View style={styles.healthTextContainer}>
+            <Text style={styles.healthTitle}>允许访问健康数据</Text>
+            <Text style={styles.healthSubtitle}>
+              在iOS设置中开启以追踪正念状态
+            </Text>
+          </View>
+          <Icon name="chevron-right" size={20} color="#6B7280" />
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: 80,
+  },
+  header: {
+    paddingHorizontal: 32,
+    paddingTop: 10,
+    paddingBottom: 20,
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  tipCard: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    marginHorizontal: 32,
+    marginBottom: 24,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'flex-start',
+  },
+  tipTextContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  tipText: {
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 20,
+  },
+  profitCard: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 32,
+    marginBottom: 24,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  profitHeader: {
+    marginBottom: 20,
+  },
+  profitTitleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  profitTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  allButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  allButtonText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginHorizontal: 4,
+  },
+  profitAmount: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#22C55E',
+  },
+  chartArea: {
+    position: 'relative',
+    marginBottom: 20,
+  },
+  chart: {
+    borderRadius: 16,
+  },
+  yAxisLabels: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    height: 200,
+    justifyContent: 'space-between',
+    paddingVertical: 20,
+  },
+  yAxisLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'right',
+  },
+  periodSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  periodButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  periodButtonActive: {
+    backgroundColor: '#000000',
+  },
+  periodButtonText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  periodButtonTextActive: {
+    color: '#ffffff',
+  },
+  expandButton: {
+    padding: 8,
+  },
+  healthCard: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    marginHorizontal: 32,
+    marginBottom: 24,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  healthIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ECFDF5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  healthTextContainer: {
+    flex: 1,
+  },
+  healthTitle: {
+    fontSize: 14,
+    color: '#000000',
+    fontWeight: '500',
+  },
+  healthSubtitle: {
+    fontSize: 14,
+    color: '#000000',
+    fontWeight: '500',
+  },
+});
