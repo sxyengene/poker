@@ -1,5 +1,6 @@
 import { SessionManager } from "../models/Session";
-import { Session, EXAMPLE_SESSION } from "../types";
+import type { Session } from "../types";
+import { EXAMPLE_SESSION } from "../types";
 
 /**
  * SessionManager使用示例
