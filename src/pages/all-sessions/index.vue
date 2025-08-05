@@ -4,8 +4,28 @@
     <view class="header">
       <text class="title">All Sessions</text>
       <view class="header-icons">
-        <uni-icons type="wallet" size="28" class="icon-wallet" />
-        <uni-icons type="settings" size="28" class="icon-settings" />
+        <view 
+          class="icon-wrapper wallet-icon"
+          :class="{ 'active': isWalletSelected }"
+          @click="selectIcon('wallet')"
+        >
+          <image 
+            :src="isWalletSelected ? '/src/static/icons/wallet-active.svg' : '/src/static/icons/wallet.svg'" 
+            mode="aspectFit" 
+            class="icon-image"
+          />
+        </view>
+        <view 
+          class="icon-wrapper settings-icon"
+          :class="{ 'active': isSettingsSelected }"
+          @click="selectIcon('settings')"
+        >
+          <image 
+            :src="isSettingsSelected ? '/src/static/icons/settings-active.svg' : '/src/static/icons/settings.svg'" 
+            mode="aspectFit" 
+            class="icon-image"
+          />
+        </view>
         <uni-icons 
           :type="listType === 'impact' ? 'list' : 'grid'" 
           size="28" 
@@ -85,9 +105,21 @@
 import { ref, onMounted } from 'vue'
 import { SessionStorage } from '../../utils/storage'
 import type { Session } from '../../types'
+import SvgIcon from '../../components/SvgIcon.vue'
 
 const sessions = ref<Session[]>([])
 const listType = ref<'impact' | 'standard'>('standard')
+const isWalletSelected = ref<boolean>(false)
+const isSettingsSelected = ref<boolean>(false)
+
+// 选择图标
+const selectIcon = (icon: 'wallet' | 'settings') => {
+  if (icon === 'wallet') {
+    isWalletSelected.value = !isWalletSelected.value
+  } else {
+    isSettingsSelected.value = !isSettingsSelected.value
+  }
+}
 
 // 切换列表格式
 const toggleListType = () => {
@@ -189,7 +221,36 @@ onMounted(() => {
   gap: 24rpx;
 }
 
-.icon-wallet, .icon-settings, .icon-toggle {
+.header-icons .icon-wrapper {
+  width: 56rpx;
+  height: 56rpx;
+  margin-left: 24rpx;
+  transition: all 0.3s ease;
+}
+
+.header-icons .wallet-icon {
+  color: #7A7E83;
+}
+
+.header-icons .settings-icon {
+  color: #7A7E83;
+}
+
+.header-icons .wallet-icon.active {
+  color: #6c63ff;
+}
+
+.header-icons .settings-icon.active {
+  color: #6c63ff;
+}
+
+.header-icons .icon-image {
+  width: 100%;
+  height: 100%;
+}
+
+.icon-toggle {
+  margin-left: 24rpx;
   color: #6c63ff;
 }
 
@@ -346,4 +407,4 @@ onMounted(() => {
   box-shadow: 0 2rpx 8rpx rgba(108,99,255,0.15);
   margin-top: -24rpx;
 }
-</style> 
+</style>
