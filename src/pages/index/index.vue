@@ -87,18 +87,23 @@ const navigateToNewSession = () => {
 
 // 查看所有会话
 const viewSessions = () => {
-  uni.showToast({
-    title: "会话列表功能待实现",
-    icon: "none",
+  uni.navigateTo({
+    url: "/pages/all-sessions/index",
   });
 };
 
 // 查看会话详情
 const viewSessionDetail = (session: any) => {
-  uni.showToast({
-    title: "会话详情功能待实现",
-    icon: "none",
-  });
+  if (session.id) {
+    uni.navigateTo({
+      url: `/pages/session-detail/index?id=${session.id}`
+    })
+  } else {
+    uni.showToast({
+      title: '会话ID不存在',
+      icon: 'error'
+    })
+  }
 };
 
 // 格式化日期

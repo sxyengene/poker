@@ -12,8 +12,59 @@
         "navigationBarTitleText": "New Session",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/all-sessions/index",
+      "style": {
+        "navigationBarTitleText": "All Sessions"
+      }
+    },
+    {
+      "path": "pages/session-detail/index",
+      "style": {
+        "navigationBarTitleText": "Session Detail",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/stats/index",
+      "style": {
+        "navigationBarTitleText": "Statistics"
+      }
+    },
+    {
+      "path": "pages/settings/index",
+      "style": {
+        "navigationBarTitleText": "Settings"
+      }
     }
   ],
+  "tabBar": {
+    "color": "#7A7E83",
+    "selectedColor": "#3cc51f",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "iconPath": "static/tabbar/home.svg",
+        "selectedIconPath": "static/tabbar/home-active.svg",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/all-sessions/index",
+        "iconPath": "static/tabbar/sessions.svg",
+        "selectedIconPath": "static/tabbar/sessions-active.svg",
+        "text": "会话"
+      },
+      {
+        "pagePath": "pages/stats/index",
+        "iconPath": "static/tabbar/stats.svg",
+        "selectedIconPath": "static/tabbar/stats-active.svg",
+        "text": "统计"
+      }
+    ]
+  },
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "Poker4",

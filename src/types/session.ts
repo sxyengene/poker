@@ -31,6 +31,8 @@ export type SessionType = {
 
 // 完整的会话对象结构
 export interface Session {
+  id?: string; // 会话唯一标识
+  createdAt?: string; // 创建时间
   sessionType: SessionType;
   startTime: Date; // 格式: "Jun 24,2025 06:40" → new Date("2025-06-24T06:40")
   endTime: Date;
