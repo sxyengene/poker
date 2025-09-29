@@ -34,6 +34,14 @@
           </view>
           <uni-icons type="right" size="16" class="arrow-icon" />
         </view>
+        
+        <view class="setting-item" @click="addTestData">
+          <view class="setting-left">
+            <uni-icons type="plus" size="24" class="setting-icon" />
+            <text class="setting-label">Add Test Data</text>
+          </view>
+          <uni-icons type="right" size="16" class="arrow-icon" />
+        </view>
       </view>
 
       <!-- 应用设置 -->
@@ -106,6 +114,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { SessionStorage } from '../../utils/storage'
+import { InitData } from '../../utils/init-data'
 
 const notificationsEnabled = ref(true)
 const darkModeEnabled = ref(false)
@@ -168,6 +177,53 @@ const clearAllData = () => {
       }
     }
   })
+}
+
+// 添加测试数据
+const addTestData = () => {
+  const existingSessions = SessionStorage.getAllSessions()
+  
+  if (existingSessions.length > 0) {
+    uni.showModal({
+      title: '添加测试数据',
+      content: `当前已有 ${existingSessions.length} 个会话，是否要替换为测试数据？`,
+      success: (res) => {
+        if (res.confirm) {
+          const success = InitData.forceReinitialize()
+          if (success) {
+            uni.showToast({
+              title: '测试数据添加成功',
+              icon: 'success',
+              duration: 3000
+            })
+            console.log('测试数据摘要:')
+            console.log(InitData.getDataSummary())
+          } else {
+            uni.showToast({
+              title: '添加失败',
+              icon: 'error'
+            })
+          }
+        }
+      }
+    })
+  } else {
+    const success = InitData.initializeTestData()
+    if (success) {
+      uni.showToast({
+        title: '测试数据添加成功',
+        icon: 'success',
+        duration: 3000
+      })
+      console.log('测试数据摘要:')
+      console.log(InitData.getDataSummary())
+    } else {
+      uni.showToast({
+        title: '添加失败',
+        icon: 'error'
+      })
+    }
+  }
 }
 
 // 切换通知
