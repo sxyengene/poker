@@ -10,7 +10,7 @@
       <!-- 数据管理 -->
       <view class="settings-section">
         <text class="section-title">Data Management</text>
-        
+
         <view class="setting-item" @click="exportData">
           <view class="setting-left">
             <uni-icons type="download" size="24" class="setting-icon" />
@@ -18,7 +18,7 @@
           </view>
           <uni-icons type="right" size="16" class="arrow-icon" />
         </view>
-        
+
         <view class="setting-item" @click="importData">
           <view class="setting-left">
             <uni-icons type="upload" size="24" class="setting-icon" />
@@ -26,7 +26,7 @@
           </view>
           <uni-icons type="right" size="16" class="arrow-icon" />
         </view>
-        
+
         <view class="setting-item" @click="clearAllData">
           <view class="setting-left">
             <uni-icons type="trash" size="24" class="setting-icon danger" />
@@ -34,7 +34,7 @@
           </view>
           <uni-icons type="right" size="16" class="arrow-icon" />
         </view>
-        
+
         <view class="setting-item" @click="addTestData">
           <view class="setting-left">
             <uni-icons type="plus" size="24" class="setting-icon" />
@@ -47,15 +47,18 @@
       <!-- 应用设置 -->
       <view class="settings-section">
         <text class="section-title">App Settings</text>
-        
+
         <view class="setting-item">
           <view class="setting-left">
             <uni-icons type="notification" size="24" class="setting-icon" />
             <text class="setting-label">Notifications</text>
           </view>
-          <switch :checked="notificationsEnabled" @change="toggleNotifications" />
+          <switch
+            :checked="notificationsEnabled"
+            @change="toggleNotifications"
+          />
         </view>
-        
+
         <view class="setting-item">
           <view class="setting-left">
             <uni-icons type="eye" size="24" class="setting-icon" />
@@ -63,7 +66,7 @@
           </view>
           <switch :checked="darkModeEnabled" @change="toggleDarkMode" />
         </view>
-        
+
         <view class="setting-item" @click="changeCurrency">
           <view class="setting-left">
             <uni-icons type="wallet" size="24" class="setting-icon" />
@@ -79,7 +82,7 @@
       <!-- 关于 -->
       <view class="settings-section">
         <text class="section-title">About</text>
-        
+
         <view class="setting-item" @click="showVersion">
           <view class="setting-left">
             <uni-icons type="info" size="24" class="setting-icon" />
@@ -90,7 +93,7 @@
             <uni-icons type="right" size="16" class="arrow-icon" />
           </view>
         </view>
-        
+
         <view class="setting-item" @click="showPrivacy">
           <view class="setting-left">
             <uni-icons type="shield" size="24" class="setting-icon" />
@@ -98,7 +101,7 @@
           </view>
           <uni-icons type="right" size="16" class="arrow-icon" />
         </view>
-        
+
         <view class="setting-item" @click="showTerms">
           <view class="setting-left">
             <uni-icons type="file-text" size="24" class="setting-icon" />
@@ -112,177 +115,177 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { SessionStorage } from '../../utils/storage'
-import { InitData } from '../../utils/init-data'
+import { ref } from "vue";
+import { SessionStorage } from "../../utils/storage";
+import { InitData } from "../../utils/init-data";
 
-const notificationsEnabled = ref(true)
-const darkModeEnabled = ref(false)
-const currentCurrency = ref('USD')
-const appVersion = ref('1.0.0')
+const notificationsEnabled = ref(true);
+const darkModeEnabled = ref(false);
+const currentCurrency = ref("USD");
+const appVersion = ref("1.0.0");
 
 // 导出数据
 const exportData = () => {
   try {
-    const data = SessionStorage.exportSessions()
+    const data = SessionStorage.exportSessions();
     // 在实际应用中，这里应该触发文件下载
     uni.showToast({
-      title: '数据导出成功',
-      icon: 'success'
-    })
-    console.log('Exported data:', data)
+      title: "数据导出成功",
+      icon: "success",
+    });
+    console.log("Exported data:", data);
   } catch (error) {
     uni.showToast({
-      title: '导出失败',
-      icon: 'error'
-    })
+      title: "导出失败",
+      icon: "error",
+    });
   }
-}
+};
 
 // 导入数据
 const importData = () => {
   uni.showModal({
-    title: '导入数据',
-    content: '此功能将覆盖现有数据，确定继续吗？',
+    title: "导入数据",
+    content: "此功能将覆盖现有数据，确定继续吗？",
     success: (res) => {
       if (res.confirm) {
         // 在实际应用中，这里应该触发文件选择
         uni.showToast({
-          title: '导入功能待实现',
-          icon: 'none'
-        })
+          title: "导入功能待实现",
+          icon: "none",
+        });
       }
-    }
-  })
-}
+    },
+  });
+};
 
 // 清除所有数据
 const clearAllData = () => {
   uni.showModal({
-    title: '清除所有数据',
-    content: '此操作将永久删除所有会话数据，无法恢复。确定继续吗？',
+    title: "清除所有数据",
+    content: "此操作将永久删除所有会话数据，无法恢复。确定继续吗？",
     success: (res) => {
       if (res.confirm) {
         if (SessionStorage.clearAllSessions()) {
           uni.showToast({
-            title: '数据已清除',
-            icon: 'success'
-          })
+            title: "数据已清除",
+            icon: "success",
+          });
         } else {
           uni.showToast({
-            title: '清除失败',
-            icon: 'error'
-          })
+            title: "清除失败",
+            icon: "error",
+          });
         }
       }
-    }
-  })
-}
+    },
+  });
+};
 
 // 添加测试数据
 const addTestData = () => {
-  const existingSessions = SessionStorage.getAllSessions()
-  
+  const existingSessions = SessionStorage.getAllSessions();
+
   if (existingSessions.length > 0) {
     uni.showModal({
-      title: '添加测试数据',
+      title: "添加测试数据",
       content: `当前已有 ${existingSessions.length} 个会话，是否要替换为测试数据？`,
       success: (res) => {
         if (res.confirm) {
-          const success = InitData.forceReinitialize()
+          const success = InitData.forceReinitialize();
           if (success) {
             uni.showToast({
-              title: '测试数据添加成功',
-              icon: 'success',
-              duration: 3000
-            })
-            console.log('测试数据摘要:')
-            console.log(InitData.getDataSummary())
+              title: "测试数据添加成功",
+              icon: "success",
+              duration: 3000,
+            });
+            console.log("测试数据摘要:");
+            console.log(InitData.getDataSummary());
           } else {
             uni.showToast({
-              title: '添加失败',
-              icon: 'error'
-            })
+              title: "添加失败",
+              icon: "error",
+            });
           }
         }
-      }
-    })
+      },
+    });
   } else {
-    const success = InitData.initializeTestData()
+    const success = InitData.initializeTestData();
     if (success) {
       uni.showToast({
-        title: '测试数据添加成功',
-        icon: 'success',
-        duration: 3000
-      })
-      console.log('测试数据摘要:')
-      console.log(InitData.getDataSummary())
+        title: "测试数据添加成功",
+        icon: "success",
+        duration: 3000,
+      });
+      console.log("测试数据摘要:");
+      console.log(InitData.getDataSummary());
     } else {
       uni.showToast({
-        title: '添加失败',
-        icon: 'error'
-      })
+        title: "添加失败",
+        icon: "error",
+      });
     }
   }
-}
+};
 
 // 切换通知
 const toggleNotifications = (e: any) => {
-  notificationsEnabled.value = e.detail.value
+  notificationsEnabled.value = e.detail.value;
   uni.showToast({
-    title: `通知已${notificationsEnabled.value ? '开启' : '关闭'}`,
-    icon: 'none'
-  })
-}
+    title: `通知已${notificationsEnabled.value ? "开启" : "关闭"}`,
+    icon: "none",
+  });
+};
 
 // 切换深色模式
 const toggleDarkMode = (e: any) => {
-  darkModeEnabled.value = e.detail.value
+  darkModeEnabled.value = e.detail.value;
   uni.showToast({
-    title: `深色模式已${darkModeEnabled.value ? '开启' : '关闭'}`,
-    icon: 'none'
-  })
-}
+    title: `深色模式已${darkModeEnabled.value ? "开启" : "关闭"}`,
+    icon: "none",
+  });
+};
 
 // 更改货币
 const changeCurrency = () => {
   uni.showActionSheet({
-    itemList: ['USD', 'EUR', 'CNY', 'JPY'],
+    itemList: ["USD", "EUR", "CNY", "JPY"],
     success: (res) => {
-      const currencies = ['USD', 'EUR', 'CNY', 'JPY']
-      currentCurrency.value = currencies[res.tapIndex]
+      const currencies = ["USD", "EUR", "CNY", "JPY"];
+      currentCurrency.value = currencies[res.tapIndex];
       uni.showToast({
         title: `货币已更改为 ${currentCurrency.value}`,
-        icon: 'none'
-      })
-    }
-  })
-}
+        icon: "none",
+      });
+    },
+  });
+};
 
 // 显示版本信息
 const showVersion = () => {
   uni.showModal({
-    title: '版本信息',
+    title: "版本信息",
     content: `Poker4 v${appVersion.value}\n\n一个简单而强大的扑克会话管理应用。`,
-    showCancel: false
-  })
-}
+    showCancel: false,
+  });
+};
 
 // 显示隐私政策
 const showPrivacy = () => {
   uni.showToast({
-    title: '隐私政策功能待实现',
-    icon: 'none'
-  })
-}
+    title: "隐私政策功能待实现",
+    icon: "none",
+  });
+};
 
 // 显示服务条款
 const showTerms = () => {
   uni.showToast({
-    title: '服务条款功能待实现',
-    icon: 'none'
-  })
-}
+    title: "服务条款功能待实现",
+    icon: "none",
+  });
+};
 </script>
 
 <style scoped lang="scss">
@@ -302,7 +305,7 @@ const showTerms = () => {
 .title {
   font-size: 48rpx;
   font-weight: 800;
-  font-family: 'Fredoka', 'Arial', sans-serif;
+  font-family: "Fredoka", "Arial", sans-serif;
 }
 
 .settings-list {
@@ -373,4 +376,4 @@ const showTerms = () => {
 .arrow-icon {
   color: #999;
 }
-</style> 
+</style>

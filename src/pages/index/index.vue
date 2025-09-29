@@ -97,13 +97,13 @@ const viewSessions = () => {
 const viewSessionDetail = (session: any) => {
   if (session.id) {
     uni.navigateTo({
-      url: `/pages/session-detail/index?id=${session.id}`
-    })
+      url: `/pages/session-detail/index?id=${session.id}`,
+    });
   } else {
     uni.showToast({
-      title: '会话ID不存在',
-      icon: 'error'
-    })
+      title: "会话ID不存在",
+      icon: "error",
+    });
   }
 };
 
@@ -153,15 +153,15 @@ onMounted(() => {
     const initialized = InitData.initializeTestData();
     if (initialized) {
       uni.showToast({
-        title: '已添加测试数据',
-        icon: 'success',
-        duration: 2000
+        title: "已添加测试数据",
+        icon: "success",
+        duration: 2000,
       });
-      console.log('测试数据初始化完成');
+      console.log("测试数据初始化完成");
       console.log(InitData.getDataSummary());
     }
   }
-  
+
   calculateStats();
 });
 
