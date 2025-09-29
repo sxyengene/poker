@@ -20,27 +20,16 @@
           />
         </view>
         <view
-          class="icon-wrapper settings-icon"
-          :class="{ active: isSettingsSelected }"
-          @click="selectIcon('settings')"
-        >
-          <image
-            :src="
-              isSettingsSelected
-                ? '/src/static/icons/settings-active.svg'
-                : '/src/static/icons/settings.svg'
-            "
-            mode="aspectFit"
-            class="icon-image"
-          />
-        </view>
-        <view
           id="filter-icon"
-          class="icon-wrapper filter-icon"
+          class="icon-wrapper settings-icon"
           :class="{ active: showFilterPopup || hasActiveFilters }"
           @click="toggleFilter"
         >
-          <uni-icons type="funnel" size="28" class="icon-image" />
+          <image
+            src="/src/static/icons/settings.svg"
+            mode="aspectFit"
+            class="icon-image"
+          />
         </view>
         <uni-icons
           :type="listType === 'impact' ? 'list' : 'grid'"
@@ -168,7 +157,6 @@ import FilterPopup from "../../components/FilterPopup.vue";
 const sessions = ref<Session[]>([]);
 const listType = ref<"impact" | "standard">("standard");
 const isWalletSelected = ref<boolean>(false);
-const isSettingsSelected = ref<boolean>(false);
 const showFilterPopup = ref<boolean>(false);
 const filterIconRect = ref<any>({});
 const currentFilters = ref<any>({
@@ -183,11 +171,9 @@ const currentFilters = ref<any>({
 });
 
 // 选择图标
-const selectIcon = (icon: "wallet" | "settings") => {
+const selectIcon = (icon: "wallet") => {
   if (icon === "wallet") {
     isWalletSelected.value = !isWalletSelected.value;
-  } else {
-    isSettingsSelected.value = !isSettingsSelected.value;
   }
 };
 
@@ -434,7 +420,7 @@ onMounted(() => {
   background: rgba(108, 99, 255, 0.1);
 }
 
-.header-icons .filter-icon.active {
+.header-icons .settings-icon.active {
   color: #6c63ff;
   background: rgba(108, 99, 255, 0.1);
 }

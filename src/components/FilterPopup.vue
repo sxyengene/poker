@@ -5,175 +5,83 @@
 
     <!-- 弹窗内容 -->
     <view v-if="visible" class="popup-content" :style="popupStyle">
-      <!-- 弹窗头部 -->
-      <view class="popup-header">
-        <text class="popup-title">筛选条件</text>
-        <view class="header-actions">
-          <text class="reset-btn" @click="resetFilters">重置</text>
-          <text class="close-btn" @click="closePopup">完成</text>
+      <!-- 视图模式切换 -->
+      <view class="view-mode-section">
+        <view
+          class="mode-option"
+          :class="{ active: viewMode === 'standard' }"
+          @click="setViewMode('standard')"
+        >
+          <text class="mode-text">Standard</text>
+        </view>
+        <view
+          class="mode-option"
+          :class="{ active: viewMode === 'compact' }"
+          @click="setViewMode('compact')"
+        >
+          <text class="mode-text">Compact</text>
+          <text class="check-icon">✓</text>
         </view>
       </view>
 
       <!-- 筛选内容 -->
       <scroll-view class="filter-content" scroll-y>
-        <!-- 会话类型筛选 -->
-        <view class="filter-section">
-          <view class="section-header" @click="toggleSection('sessionType')">
-            <text class="section-title">会话类型</text>
-            <uni-icons
-              :type="expandedSections.sessionType ? 'up' : 'down'"
-              size="16"
-              class="expand-icon"
-            />
-          </view>
-          <view v-if="expandedSections.sessionType" class="section-content">
-            <radio-group @change="onSessionTypeChange">
-              <label class="filter-option">
-                <radio value="all" :checked="filters.sessionType === 'all'" />
-                <text class="option-text">全部</text>
-              </label>
-              <label class="filter-option">
-                <radio
-                  value="Cash Game"
-                  :checked="filters.sessionType === 'Cash Game'"
-                />
-                <text class="option-text">现金游戏</text>
-              </label>
-              <label class="filter-option">
-                <radio
-                  value="Tournament"
-                  :checked="filters.sessionType === 'Tournament'"
-                />
-                <text class="option-text">锦标赛</text>
-              </label>
-            </radio-group>
-          </view>
+        <!-- Session Type -->
+        <view class="filter-item" @click="toggleSection('sessionType')">
+          <text class="item-title">Session Type</text>
+          <text class="item-icon">♣️</text>
+          <text class="arrow-icon">></text>
         </view>
 
-        <!-- 游戏类型筛选 -->
-        <view class="filter-section">
-          <view class="section-header" @click="toggleSection('gameType')">
-            <text class="section-title">游戏类型</text>
-            <uni-icons
-              :type="expandedSections.gameType ? 'up' : 'down'"
-              size="16"
-              class="expand-icon"
-            />
-          </view>
-          <view v-if="expandedSections.gameType" class="section-content">
-            <checkbox-group @change="onGameTypeChange">
-              <label
-                v-for="gameType in availableGameTypes"
-                :key="gameType"
-                class="filter-option"
-              >
-                <checkbox
-                  :value="gameType"
-                  :checked="filters.gameTypes.includes(gameType)"
-                />
-                <text class="option-text">{{ gameType }}</text>
-              </label>
-            </checkbox-group>
-          </view>
+        <!-- Bankroll -->
+        <view class="filter-item" @click="toggleSection('bankroll')">
+          <text class="item-title">Bankroll</text>
+          <text class="item-icon">💼</text>
+          <text class="arrow-icon">></text>
         </view>
 
-        <!-- 位置筛选 -->
-        <view class="filter-section">
-          <view class="section-header" @click="toggleSection('location')">
-            <text class="section-title">游戏位置</text>
-            <uni-icons
-              :type="expandedSections.location ? 'up' : 'down'"
-              size="16"
-              class="expand-icon"
-            />
-          </view>
-          <view v-if="expandedSections.location" class="section-content">
-            <checkbox-group @change="onLocationChange">
-              <label
-                v-for="location in availableLocations"
-                :key="location"
-                class="filter-option"
-              >
-                <checkbox
-                  :value="location"
-                  :checked="filters.locations.includes(location)"
-                />
-                <text class="option-text">{{ location }}</text>
-              </label>
-            </checkbox-group>
-          </view>
+        <!-- Location -->
+        <view class="filter-item" @click="toggleSection('location')">
+          <text class="item-title">Location</text>
+          <text class="item-icon">⚓</text>
+          <text class="arrow-icon">></text>
         </view>
 
-        <!-- 盈亏筛选 -->
-        <view class="filter-section">
-          <view class="section-header" @click="toggleSection('profitStatus')">
-            <text class="section-title">盈亏状态</text>
-            <uni-icons
-              :type="expandedSections.profitStatus ? 'up' : 'down'"
-              size="16"
-              class="expand-icon"
-            />
-          </view>
-          <view v-if="expandedSections.profitStatus" class="section-content">
-            <radio-group @change="onProfitStatusChange">
-              <label class="filter-option">
-                <radio value="all" :checked="filters.profitStatus === 'all'" />
-                <text class="option-text">全部</text>
-              </label>
-              <label class="filter-option">
-                <radio
-                  value="profit"
-                  :checked="filters.profitStatus === 'profit'"
-                />
-                <text class="option-text">盈利</text>
-              </label>
-              <label class="filter-option">
-                <radio
-                  value="loss"
-                  :checked="filters.profitStatus === 'loss'"
-                />
-                <text class="option-text">亏损</text>
-              </label>
-            </radio-group>
-          </view>
+        <!-- Game Type -->
+        <view class="filter-item" @click="toggleSection('gameType')">
+          <text class="item-title">Game Type</text>
+          <text class="item-icon">🎲</text>
+          <text class="arrow-icon">></text>
         </view>
 
-        <!-- 日期范围筛选 -->
-        <view class="filter-section">
-          <view class="section-header" @click="toggleSection('dateRange')">
-            <text class="section-title">日期范围</text>
-            <uni-icons
-              :type="expandedSections.dateRange ? 'up' : 'down'"
-              size="16"
-              class="expand-icon"
-            />
-          </view>
-          <view v-if="expandedSections.dateRange" class="section-content">
-            <view class="date-range-section">
-              <view class="date-input-group">
-                <text class="date-label">开始日期:</text>
-                <input
-                  type="date"
-                  class="date-input"
-                  :value="filters.dateRange.start"
-                  @input="onStartDateChange"
-                  placeholder="选择开始日期"
-                />
-              </view>
-              <view class="date-input-group">
-                <text class="date-label">结束日期:</text>
-                <input
-                  type="date"
-                  class="date-input"
-                  :value="filters.dateRange.end"
-                  @input="onEndDateChange"
-                  placeholder="选择结束日期"
-                />
-              </view>
-            </view>
-          </view>
+        <!-- Stakes -->
+        <view class="filter-item" @click="toggleSection('stakes')">
+          <text class="item-title">Stakes</text>
+          <text class="item-icon">💰</text>
+          <text class="arrow-icon">></text>
+        </view>
+
+        <!-- Tags -->
+        <view class="filter-item" @click="toggleSection('tags')">
+          <text class="item-title">Tags</text>
+          <text class="item-icon">🏷️</text>
+          <text class="arrow-icon">></text>
+        </view>
+
+        <!-- Date Range -->
+        <view class="filter-item" @click="toggleSection('dateRange')">
+          <text class="item-title">Date Range</text>
+          <text class="item-icon">📅</text>
         </view>
       </scroll-view>
+
+      <!-- Clear Filters Button -->
+      <view class="clear-filters-section">
+        <view class="clear-filters-btn" @click="resetFilters">
+          <text class="clear-text">Clear Filters</text>
+          <text class="clear-icon">✕</text>
+        </view>
+      </view>
     </view>
   </view>
 </template>
@@ -219,18 +127,27 @@ const filters = ref({
   gameTypes: [] as string[],
   locations: [] as string[],
   profitStatus: "all",
+  bankroll: [] as string[],
+  stakes: [] as string[],
+  tags: [] as string[],
   dateRange: {
     start: "",
     end: "",
   },
 });
 
+// 视图模式
+const viewMode = ref("compact");
+
 // 展开状态
 const expandedSections = ref({
-  sessionType: true,
+  sessionType: false,
   gameType: false,
   location: false,
   profitStatus: false,
+  bankroll: false,
+  stakes: false,
+  tags: false,
   dateRange: false,
 });
 
@@ -269,9 +186,15 @@ const initializeData = () => {
   availableLocations.value = SessionStorage.getAllLocations();
 };
 
+// 设置视图模式
+const setViewMode = (mode: string) => {
+  viewMode.value = mode;
+};
+
 // 切换展开状态
 const toggleSection = (section: string) => {
-  expandedSections.value[section] = !expandedSections.value[section];
+  // 这里可以添加导航到详细筛选页面的逻辑
+  console.log("Toggle section:", section);
 };
 
 // 重置筛选条件
@@ -281,6 +204,9 @@ const resetFilters = () => {
     gameTypes: [],
     locations: [],
     profitStatus: "all",
+    bankroll: [],
+    stakes: [],
+    tags: [],
     dateRange: {
       start: "",
       end: "",
@@ -292,37 +218,6 @@ const resetFilters = () => {
 // 关闭弹窗
 const closePopup = () => {
   emit("close");
-};
-
-// 筛选条件变化处理
-const onSessionTypeChange = (e: any) => {
-  filters.value.sessionType = e.detail.value;
-  emit("filtersChange", filters.value);
-};
-
-const onGameTypeChange = (e: any) => {
-  filters.value.gameTypes = e.detail.value;
-  emit("filtersChange", filters.value);
-};
-
-const onLocationChange = (e: any) => {
-  filters.value.locations = e.detail.value;
-  emit("filtersChange", filters.value);
-};
-
-const onProfitStatusChange = (e: any) => {
-  filters.value.profitStatus = e.detail.value;
-  emit("filtersChange", filters.value);
-};
-
-const onStartDateChange = (e: any) => {
-  filters.value.dateRange.start = e.detail ? e.detail.value : e.target.value;
-  emit("filtersChange", filters.value);
-};
-
-const onEndDateChange = (e: any) => {
-  filters.value.dateRange.end = e.detail ? e.detail.value : e.target.value;
-  emit("filtersChange", filters.value);
 };
 
 // 监听 visible 变化，初始化数据
@@ -355,11 +250,12 @@ watch(
   background: #ffffff;
   border-radius: 16rpx;
   box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.12);
-  max-height: 70vh;
+  max-height: 80vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(0, 0, 0, 0.05);
+  min-width: 300px;
 }
 
 @keyframes popupSlideIn {
@@ -373,185 +269,111 @@ watch(
   }
 }
 
-.popup-header {
+// 视图模式切换
+.view-mode-section {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.mode-option {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 32rpx 32rpx 24rpx 32rpx;
-  border-bottom: 1px solid #f0f0f0;
-  background: #ffffff;
-  border-radius: 16rpx 16rpx 0 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.2s ease;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.active {
+    background: #ffffff;
+
+    .mode-text {
+      font-weight: 500;
+    }
+  }
+
+  &:active {
+    background: #f0f0f0;
+  }
 }
 
-.popup-title {
-  font-size: 36rpx;
-  font-weight: 600;
+.mode-text {
+  font-size: 16px;
   color: #333333;
 }
 
-.header-actions {
-  display: flex;
-  gap: 32rpx;
+.check-icon {
+  font-size: 18px;
+  color: #333333;
+  font-weight: bold;
 }
 
-.reset-btn,
-.close-btn {
-  font-size: 28rpx;
-  color: #6c63ff;
-  padding: 8rpx 16rpx;
-  border-radius: 8rpx;
-  background: transparent;
-  transition: all 0.2s ease;
-}
-
-.reset-btn:active,
-.close-btn:active {
-  background: rgba(108, 99, 255, 0.1);
-  transform: scale(0.95);
-}
-
+// 筛选内容
 .filter-content {
   flex: 1;
-  height: 0;
+  background: #ffffff;
 }
 
-.filter-section {
-  border-bottom: 1px solid #f8f8f8;
-}
-
-.filter-section:last-child {
-  border-bottom: none;
-}
-
-.section-header {
+.filter-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 28rpx 32rpx;
-  background: #fafafa;
-  transition: all 0.2s ease;
-}
-
-.section-header:active {
-  background: #f0f0f0;
-}
-
-.section-title {
-  font-size: 30rpx;
-  font-weight: 500;
-  color: #333333;
-}
-
-.expand-icon {
-  color: #666666;
-  transition: transform 0.2s ease;
-}
-
-.section-content {
-  background: #ffffff;
-  animation: slideDown 0.2s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10rpx);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.filter-option {
-  display: flex;
-  align-items: center;
-  padding: 24rpx 32rpx;
-  border-bottom: 1px solid #f8f8f8;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
   transition: background-color 0.2s ease;
+
+  &:active {
+    background: #f8f9fa;
+  }
 }
 
-.filter-option:last-child {
-  border-bottom: none;
-}
-
-.filter-option:active {
-  background: #f8f8f8;
-}
-
-.option-text {
-  margin-left: 24rpx;
-  font-size: 28rpx;
+.item-title {
+  font-size: 16px;
   color: #333333;
   flex: 1;
 }
 
-.date-range-section {
-  padding: 24rpx 32rpx;
+.item-icon {
+  font-size: 18px;
+  margin-right: 12px;
 }
 
-.date-input-group {
-  display: flex;
-  align-items: center;
-  margin-bottom: 24rpx;
+.arrow-icon {
+  font-size: 16px;
+  color: #999999;
+  font-weight: bold;
 }
 
-.date-input-group:last-child {
-  margin-bottom: 0;
-}
-
-.date-label {
-  font-size: 28rpx;
-  color: #666666;
-  width: 150rpx;
-  margin-right: 24rpx;
-}
-
-.date-input {
-  flex: 1;
-  padding: 20rpx 24rpx;
-  border: 2rpx solid #e0e0e0;
-  border-radius: 12rpx;
+// Clear Filters 按钮
+.clear-filters-section {
+  border-top: 1px solid #e9ecef;
   background: #ffffff;
-  font-size: 28rpx;
+}
+
+.clear-filters-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  transition: background-color 0.2s ease;
+
+  &:active {
+    background: #f8f9fa;
+  }
+}
+
+.clear-text {
+  font-size: 16px;
   color: #333333;
-  min-height: 44rpx;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  flex: 1;
 }
 
-.date-input:focus {
-  border-color: #6c63ff;
-  box-shadow: 0 0 0 4rpx rgba(108, 99, 255, 0.1);
-  outline: none;
-}
-
-/* radio 和 checkbox 样式优化 */
-:deep(radio) {
-  transform: scale(0.9);
-  accent-color: #6c63ff;
-}
-
-:deep(checkbox) {
-  transform: scale(0.9);
-  accent-color: #6c63ff;
-}
-
-/* 滚动条样式 */
-:deep(::-webkit-scrollbar) {
-  width: 8rpx;
-}
-
-:deep(::-webkit-scrollbar-track) {
-  background: #f8f8f8;
-  border-radius: 4rpx;
-}
-
-:deep(::-webkit-scrollbar-thumb) {
-  background: #d0d0d0;
-  border-radius: 4rpx;
-}
-
-:deep(::-webkit-scrollbar-thumb:hover) {
-  background: #b0b0b0;
+.clear-icon {
+  font-size: 18px;
+  color: #999999;
+  font-weight: bold;
 }
 </style>
