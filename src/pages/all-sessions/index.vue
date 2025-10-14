@@ -31,29 +31,23 @@
             class="icon-image"
           />
         </view>
-        <uni-icons
-          :type="listType === 'impact' ? 'list' : 'grid'"
-          size="28"
-          class="icon-toggle"
-          @click="toggleListType"
-        />
       </view>
     </view>
 
-    <!-- 主内容区：impact/standard 列表 -->
+    <!-- 主内容区：compact/standard 列表 -->
     <view class="session-list">
-      <!-- impact 格式列表 -->
-      <view v-if="listType === 'impact'" class="impact-list">
+      <!-- compact 格式列表 -->
+      <view v-if="listType === 'compact'" class="compact-list">
         <view
           v-for="(session, index) in filteredSessions"
           :key="session.id || index"
-          class="impact-item"
+          class="compact-item"
           @click="viewSessionDetail(session)"
         >
-          <text class="impact-number">{{ index + 1 }}</text>
-          <view class="impact-right">
+          <text class="compact-number">{{ index + 1 }}</text>
+          <view class="compact-right">
             <text
-              class="impact-amount"
+              class="compact-amount"
               :class="{
                 profit: getSessionProfit(session) >= 0,
                 loss: getSessionProfit(session) < 0,
@@ -62,7 +56,7 @@
               ${{ getSessionProfit(session) >= 0 ? "+" : ""
               }}{{ getSessionProfit(session) }}
             </text>
-            <uni-icons type="right" size="16" class="impact-arrow" />
+            <uni-icons type="right" size="16" class="compact-arrow" />
           </view>
         </view>
       </view>
@@ -109,6 +103,7 @@
       :trigger-rect="filterIconRect"
       @close="closeFilterPopup"
       @filters-change="onFiltersChange"
+      @view-mode-change="onViewModeChange"
     />
 
     <!-- 底部导航栏 -->
@@ -155,7 +150,7 @@ import SvgIcon from "../../components/SvgIcon.vue";
 import FilterPopup from "../../components/FilterPopup.vue";
 
 const sessions = ref<Session[]>([]);
-const listType = ref<"impact" | "standard">("standard");
+const listType = ref<"compact" | "standard">("standard");
 const isWalletSelected = ref<boolean>(false);
 const showFilterPopup = ref<boolean>(false);
 const filterIconRect = ref<any>({});
@@ -179,7 +174,7 @@ const selectIcon = (icon: "wallet") => {
 
 // 切换列表格式
 const toggleListType = () => {
-  listType.value = listType.value === "impact" ? "standard" : "impact";
+  listType.value = listType.value === "compact" ? "standard" : "compact";
 };
 
 // 切换筛选弹窗
@@ -216,6 +211,12 @@ const closeFilterPopup = () => {
 // 处理筛选条件变化
 const onFiltersChange = (filters: any) => {
   currentFilters.value = { ...filters };
+};
+
+// 处理视图模式变化
+const onViewModeChange = (mode: string) => {
+  // 将视图模式映射到列表类型
+  listType.value = mode === 'compact' ? 'compact' : 'standard';
 };
 
 // 检查是否有活跃的筛选条件
@@ -440,12 +441,12 @@ onMounted(() => {
   padding: 0;
 }
 
-// impact 格式样式
-.impact-list {
+// compact 格式样式
+.compact-list {
   padding: 0 32rpx;
 }
 
-.impact-item {
+.compact-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -453,32 +454,32 @@ onMounted(() => {
   border-bottom: 1px solid #f0f0f0;
 }
 
-.impact-number {
+.compact-number {
   font-size: 32rpx;
   font-weight: 600;
   color: #333;
 }
 
-.impact-right {
+.compact-right {
   display: flex;
   align-items: center;
   gap: 16rpx;
 }
 
-.impact-amount {
+.compact-amount {
   font-size: 32rpx;
   font-weight: 600;
 }
 
-.impact-amount.profit {
+.compact-amount.profit {
   color: #4caf50;
 }
 
-.impact-amount.loss {
+.compact-amount.loss {
   color: #f44336;
 }
 
-.impact-arrow {
+.compact-arrow {
   color: #999;
 }
 
