@@ -1,7 +1,14 @@
 <template>
   <view class="filter-popup-container">
+    <!-- 蒙层 -->
+    <view 
+      v-if="visible" 
+      class="popup-overlay" 
+      @click="handleOverlayClick"
+    ></view>
+    
     <!-- 弹窗内容 -->
-    <view v-if="visible" class="popup-content" :style="popupStyle">
+    <view v-if="visible" class="popup-content" :style="popupStyle" @click.stop>
       <!-- 视图模式切换 -->
       <view class="view-mode-section">
         <view
@@ -290,6 +297,11 @@ const closePopup = () => {
   emit("close");
 };
 
+// 处理蒙层点击
+const handleOverlayClick = () => {
+  closePopup();
+};
+
 // 监听 visible 变化，初始化数据
 watch(
   () => props.visible,
@@ -305,6 +317,17 @@ watch(
 .filter-popup-container {
   position: relative;
   z-index: 9999;
+}
+
+// 蒙层样式
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  z-index: 9998;
 }
 
 .popup-content {
