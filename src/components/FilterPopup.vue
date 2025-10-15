@@ -259,6 +259,10 @@ const popupStyle = computed(() => {
 const initializeData = () => {
   availableGameTypes.value = SessionStorage.getAllGameTypes();
   availableLocations.value = SessionStorage.getAllLocations();
+  
+  // 从本地存储恢复视图模式
+  const savedViewMode = SessionStorage.getViewMode();
+  viewMode.value = savedViewMode;
 };
 
 // 设置视图模式
@@ -266,6 +270,8 @@ const setViewMode = (mode: string) => {
   viewMode.value = mode;
   // 发出视图模式变化事件
   emit("viewModeChange", mode);
+  // 保存视图模式到本地存储
+  SessionStorage.saveViewMode(mode as "compact" | "standard");
 };
 
 // 切换展开状态

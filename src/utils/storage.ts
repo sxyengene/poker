@@ -350,4 +350,31 @@ export class SessionStorage {
     });
     return [...new Set(allTags)];
   }
+
+  // 添加视图模式的存储方法
+  private static readonly VIEW_MODE_KEY = "poker_view_mode";
+
+  /**
+   * 保存视图模式
+   */
+  static saveViewMode(mode: "compact" | "standard"): void {
+    try {
+      uni.setStorageSync(this.VIEW_MODE_KEY, mode);
+    } catch (error) {
+      console.error("保存视图模式失败:", error);
+    }
+  }
+
+  /**
+   * 获取视图模式
+   */
+  static getViewMode(): "compact" | "standard" {
+    try {
+      const mode = uni.getStorageSync(this.VIEW_MODE_KEY);
+      return mode === "compact" || mode === "standard" ? mode : "standard";
+    } catch (error) {
+      console.error("获取视图模式失败:", error);
+      return "standard";
+    }
+  }
 }

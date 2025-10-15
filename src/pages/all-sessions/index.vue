@@ -217,6 +217,8 @@ const onFiltersChange = (filters: any) => {
 const onViewModeChange = (mode: string) => {
   // 将视图模式映射到列表类型
   listType.value = mode === 'compact' ? 'compact' : 'standard';
+  // 保存视图模式到本地存储
+  SessionStorage.saveViewMode(listType.value);
 };
 
 // 检查是否有活跃的筛选条件
@@ -358,6 +360,8 @@ const navigateToSettings = () => {
 
 onMounted(() => {
   loadSessions();
+  // 从本地存储恢复视图模式
+  listType.value = SessionStorage.getViewMode();
 });
 </script>
 
