@@ -1,15 +1,30 @@
 import type { Session } from "../types";
+import { MockData } from "./mock-data";
 
 /**
  * 本地存储工具类
  */
 export class SessionStorage {
   private static readonly STORAGE_KEY = "poker_sessions";
+  // 添加一个标志来控制是否使用模拟数据
+  private static useMockData = false;
+
+  /**
+   * 设置是否使用模拟数据
+   */
+  static setUseMockData(useMock: boolean): void {
+    this.useMockData = useMock;
+  }
 
   /**
    * 获取所有会话
    */
   static getAllSessions(): Session[] {
+    // 如果设置为使用模拟数据，则返回模拟数据
+    if (this.useMockData) {
+      return MockData.getMockSessions();
+    }
+
     try {
       const sessions = uni.getStorageSync(this.STORAGE_KEY);
       if (!sessions || !Array.isArray(sessions)) {
@@ -30,6 +45,12 @@ export class SessionStorage {
    * 保存会话
    */
   static saveSession(session: Omit<Session, "id" | "createdAt">): boolean {
+    // 如果使用模拟数据，不实际保存
+    if (this.useMockData) {
+      console.log("使用模拟数据模式，不保存会话");
+      return true;
+    }
+
     try {
       const sessions = this.getAllSessions();
       const newSession = {
@@ -51,6 +72,12 @@ export class SessionStorage {
    * 更新会话
    */
   static updateSession(id: string, updatedSession: Partial<Session>): boolean {
+    // 如果使用模拟数据，不实际更新
+    if (this.useMockData) {
+      console.log("使用模拟数据模式，不更新会话");
+      return true;
+    }
+
     try {
       const sessions = this.getAllSessions();
       const index = sessions.findIndex((session) => (session as any).id === id);
@@ -72,6 +99,12 @@ export class SessionStorage {
    * 删除会话
    */
   static deleteSession(id: string): boolean {
+    // 如果使用模拟数据，不实际删除
+    if (this.useMockData) {
+      console.log("使用模拟数据模式，不删除会话");
+      return true;
+    }
+
     try {
       const sessions = this.getAllSessions();
       const filteredSessions = sessions.filter(
@@ -108,6 +141,12 @@ export class SessionStorage {
    * 清空所有会话
    */
   static clearAllSessions(): boolean {
+    // 如果使用模拟数据，不实际清空
+    if (this.useMockData) {
+      console.log("使用模拟数据模式，不清空会话");
+      return true;
+    }
+
     try {
       uni.removeStorageSync(this.STORAGE_KEY);
       return true;
@@ -134,6 +173,12 @@ export class SessionStorage {
    * 导入会话数据
    */
   static importSessions(data: string): boolean {
+    // 如果使用模拟数据，不实际导入
+    if (this.useMockData) {
+      console.log("使用模拟数据模式，不导入会话");
+      return true;
+    }
+
     try {
       const sessions = JSON.parse(data);
       if (Array.isArray(sessions)) {

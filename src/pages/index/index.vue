@@ -72,7 +72,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { SessionStorage } from "../../utils/storage";
-import { InitData } from "../../utils/init-data";
 
 const totalSessions = ref(0);
 const totalProfit = ref(0);
@@ -147,28 +146,9 @@ const calculateStats = () => {
 };
 
 onMounted(() => {
-  // 初始化测试数据（如果没有数据的话）
-  const hasData = SessionStorage.getAllSessions().length > 0;
-  if (!hasData) {
-    const initialized = InitData.initializeTestData();
-    if (initialized) {
-      uni.showToast({
-        title: "已添加测试数据",
-        icon: "success",
-        duration: 2000,
-      });
-      console.log("测试数据初始化完成");
-      console.log(InitData.getDataSummary());
-    }
-  }
-
+  // 现在使用模拟数据，不再需要初始化测试数据
   calculateStats();
 });
-
-// 监听页面显示，刷新数据
-// uni.onShow(() => {
-//   calculateStats();
-// });
 </script>
 
 <style scoped>

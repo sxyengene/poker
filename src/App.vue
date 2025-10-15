@@ -1,15 +1,22 @@
 <script setup lang="ts">
 import { onLaunch, onShow, onHide } from "@dcloudio/uni-app";
+import { SessionStorage } from "./utils/storage";
+
 onLaunch(() => {
   console.log("App Launch");
+  // 设置使用模拟数据，确保在任何环境中都使用相同的数据
+  SessionStorage.setUseMockData(true);
 });
+
 onShow(() => {
   console.log("App Show");
 });
+
 onHide(() => {
   console.log("App Hide");
 });
 </script>
+
 <style>
 /* 全局CSS重置 */
 * {

@@ -117,7 +117,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { SessionStorage } from "../../utils/storage";
-import { InitData } from "../../utils/init-data";
+import { MockData } from "../../utils/mock-data";
 
 const notificationsEnabled = ref(true);
 const darkModeEnabled = ref(false);
@@ -182,51 +182,13 @@ const clearAllData = () => {
   });
 };
 
-// 添加测试数据
+// 添加测试数据（现在显示模拟数据信息）
 const addTestData = () => {
-  const existingSessions = SessionStorage.getAllSessions();
-
-  if (existingSessions.length > 0) {
-    uni.showModal({
-      title: "添加测试数据",
-      content: `当前已有 ${existingSessions.length} 个会话，是否要替换为测试数据？`,
-      success: (res) => {
-        if (res.confirm) {
-          const success = InitData.forceReinitialize();
-          if (success) {
-            uni.showToast({
-              title: "测试数据添加成功",
-              icon: "success",
-              duration: 3000,
-            });
-            console.log("测试数据摘要:");
-            console.log(InitData.getDataSummary());
-          } else {
-            uni.showToast({
-              title: "添加失败",
-              icon: "error",
-            });
-          }
-        }
-      },
-    });
-  } else {
-    const success = InitData.initializeTestData();
-    if (success) {
-      uni.showToast({
-        title: "测试数据添加成功",
-        icon: "success",
-        duration: 3000,
-      });
-      console.log("测试数据摘要:");
-      console.log(InitData.getDataSummary());
-    } else {
-      uni.showToast({
-        title: "添加失败",
-        icon: "error",
-      });
-    }
-  }
+  uni.showModal({
+    title: "模拟数据",
+    content: "当前使用统一的模拟数据，确保在所有环境中显示相同的数据。\n\n" + MockData.getDataSummary(),
+    showCancel: false,
+  });
 };
 
 // 切换通知
@@ -288,7 +250,7 @@ const showTerms = () => {
 };
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .settings-page {
   background: #fafafa;
   min-height: 100vh;
