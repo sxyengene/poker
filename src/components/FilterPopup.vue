@@ -42,7 +42,7 @@
           <!-- Session Type -->
           <view class="filter-item" @click="toggleSection('sessionType')">
             <view class="item-left">
-              <text class="arrow-icon">></text>
+              <text class="arrow-icon">›</text>
               <text class="item-title">Session Type</text>
             </view>
             <text class="item-icon">♠</text>
@@ -51,7 +51,7 @@
           <!-- Bankroll -->
           <view class="filter-item" @click="toggleSection('bankroll')">
             <view class="item-left">
-              <text class="arrow-icon">></text>
+              <text class="arrow-icon">›</text>
               <text class="item-title">Bankroll</text>
             </view>
             <text class="item-icon">💼</text>
@@ -60,7 +60,7 @@
           <!-- Location -->
           <view class="filter-item" @click="toggleSection('location')">
             <view class="item-left">
-              <text class="arrow-icon">></text>
+              <text class="arrow-icon">›</text>
               <text class="item-title">Location</text>
             </view>
             <text class="item-icon">⚓</text>
@@ -69,7 +69,7 @@
           <!-- Game Type -->
           <view class="filter-item" @click="toggleSection('gameType')">
             <view class="item-left">
-              <text class="arrow-icon">></text>
+              <text class="arrow-icon">›</text>
               <text class="item-title">Game Type</text>
             </view>
             <text class="item-icon">🎲</text>
@@ -78,7 +78,7 @@
           <!-- Stakes -->
           <view class="filter-item" @click="toggleSection('stakes')">
             <view class="item-left">
-              <text class="arrow-icon">></text>
+              <text class="arrow-icon">›</text>
               <text class="item-title">Stakes</text>
             </view>
             <text class="item-icon">💲</text>
@@ -87,7 +87,7 @@
           <!-- Tags -->
           <view class="filter-item" @click="toggleSection('tags')">
             <view class="item-left">
-              <text class="arrow-icon">></text>
+              <text class="arrow-icon">›</text>
               <text class="item-title">Tags</text>
             </view>
             <text class="item-icon">🏷</text>
@@ -111,12 +111,25 @@
         </view>
       </view>
     </view>
+    
+    <!-- 二级筛选弹窗 -->
+    <SubFilterPopup
+      :visible="subPopupVisible"
+      :title="subPopupTitle"
+      :type="subPopupType"
+      :options="subPopupOptions"
+      :initial-value="subPopupInitialValue"
+      :trigger-rect="subPopupTriggerRect"
+      @close="closeSubPopup"
+      @confirm="handleSubPopupConfirm"
+    />
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { SessionStorage } from "../utils/storage";
+import SubFilterPopup from "./SubFilterPopup.vue";
 
 // Props
 interface Props {
@@ -188,6 +201,22 @@ const expandedSections = ref({
 const availableGameTypes = ref<string[]>([]);
 const availableLocations = ref<string[]>([]);
 
+// 二级弹窗相关状态
+const subPopupVisible = ref(false);
+const subPopupTitle = ref("");
+const subPopupType = ref<"single-select" | "multi-select" | "date-range">("single-select");
+const subPopupOptions = ref<Array<{ label: string; value: string }>>([]);
+const subPopupInitialValue = ref<string | string[] | { start: string; end: string }>();
+const subPopupTriggerRect = ref({
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0,
+  width: 0,
+  height: 0,
+});
+const currentSection = ref(""); // 当前正在操作的筛选项
+
 // 弹窗定位样式
 const popupStyle = computed(() => {
   if (!props.triggerRect || !props.visible) return { display: "none" };
@@ -202,8 +231,17 @@ const popupStyle = computed(() => {
   const topPosition = top + height + verticalGap;
 
   // 计算水平定位策略
-  const screenWidth = window.innerWidth;
-  const screenHeight = window.innerHeight;
+  let screenWidth, screenHeight;
+  try {
+    // 使用 uni-app 提供的统一 API 获取屏幕信息，适用于所有平台
+    const systemInfo = uni.getSystemInfoSync();
+    screenWidth = systemInfo.screenWidth || 375;   // 备用默认值
+    screenHeight = systemInfo.screenHeight || 667;  // 备用默认值
+  } catch (e) {
+    // 获取失败时使用默认值
+    screenWidth = 375;
+    screenHeight = 667;
+  }
 
   let positionStyle: any = {
     position: "fixed",
@@ -276,8 +314,152 @@ const setViewMode = (mode: string) => {
 
 // 切换展开状态
 const toggleSection = (section: string) => {
-  // 这里可以添加导航到详细筛选页面的逻辑
-  console.log("Toggle section:", section);
+  // 记录当前操作的筛选项
+  currentSection.value = section;
+  
+  // 获取触发元素的位置信息
+  const element = event?.target as HTMLElement;
+  const rect = element.getBoundingClientRect();
+  subPopupTriggerRect.value = {
+    top: rect.top,
+    right: rect.right,
+    bottom: rect.bottom,
+    left: rect.left,
+    width: rect.width,
+    height: rect.height
+  };
+  
+  // 根据不同的筛选项设置不同的弹窗内容
+  switch (section) {
+    case "sessionType":
+      subPopupTitle.value = "Session Type";
+      subPopupType.value = "single-select";
+      subPopupOptions.value = [
+        { label: "All", value: "all" },
+        { label: "Cash Game", value: "Cash Game" },
+        { label: "Tournament", value: "Tournament" },
+        { label: "Sit & Go", value: "Sit & Go" }
+      ];
+      subPopupInitialValue.value = filters.value.sessionType;
+      break;
+      
+    case "bankroll":
+      subPopupTitle.value = "Bankroll";
+      subPopupType.value = "multi-select";
+      subPopupOptions.value = [
+        { label: "$50", value: "50" },
+        { label: "$100", value: "100" },
+        { label: "$200", value: "200" },
+        { label: "$500", value: "500" },
+        { label: "$1000", value: "1000" }
+      ];
+      subPopupInitialValue.value = [...filters.value.bankroll];
+      break;
+      
+    case "location":
+      subPopupTitle.value = "Location";
+      subPopupType.value = "multi-select";
+      subPopupOptions.value = availableLocations.value.map(location => ({
+        label: location,
+        value: location
+      }));
+      subPopupInitialValue.value = [...filters.value.locations];
+      break;
+      
+    case "gameType":
+      subPopupTitle.value = "Game Type";
+      subPopupType.value = "multi-select";
+      subPopupOptions.value = availableGameTypes.value.map(type => ({
+        label: type,
+        value: type
+      }));
+      subPopupInitialValue.value = [...filters.value.gameTypes];
+      break;
+      
+    case "stakes":
+      subPopupTitle.value = "Stakes";
+      subPopupType.value = "multi-select";
+      subPopupOptions.value = [
+        { label: "$0.01/$0.02", value: "0.01/0.02" },
+        { label: "$0.02/$0.05", value: "0.02/0.05" },
+        { label: "$0.05/$0.10", value: "0.05/0.10" },
+        { label: "$0.10/$0.25", value: "0.10/0.25" },
+        { label: "$0.25/$0.50", value: "0.25/0.50" },
+        { label: "$0.50/$1", value: "0.50/1" },
+        { label: "$1/$2", value: "1/2" },
+        { label: "$2/$5", value: "2/5" },
+        { label: "$5/$10", value: "5/10" }
+      ];
+      subPopupInitialValue.value = [...filters.value.stakes];
+      break;
+      
+    case "tags":
+      subPopupTitle.value = "Tags";
+      subPopupType.value = "multi-select";
+      subPopupOptions.value = [
+        { label: "Online", value: "online" },
+        { label: "Live", value: "live" },
+        { label: "Home Game", value: "home" },
+        { label: "Casino", value: "casino" },
+        { label: "Vacation", value: "vacation" }
+      ];
+      subPopupInitialValue.value = [...filters.value.tags];
+      break;
+      
+    case "dateRange":
+      subPopupTitle.value = "Date Range";
+      subPopupType.value = "date-range";
+      subPopupInitialValue.value = { ...filters.value.dateRange };
+      break;
+      
+    default:
+      return;
+  }
+  
+  // 显示二级弹窗
+  subPopupVisible.value = true;
+};
+
+// 关闭二级弹窗
+const closeSubPopup = () => {
+  subPopupVisible.value = false;
+};
+
+// 处理二级弹窗确认
+const handleSubPopupConfirm = (value: any) => {
+  // 根据当前操作的筛选项更新对应的筛选条件
+  switch (currentSection.value) {
+    case "sessionType":
+      filters.value.sessionType = value as string;
+      break;
+      
+    case "bankroll":
+      filters.value.bankroll = value as string[];
+      break;
+      
+    case "location":
+      filters.value.locations = value as string[];
+      break;
+      
+    case "gameType":
+      filters.value.gameTypes = value as string[];
+      break;
+      
+    case "stakes":
+      filters.value.stakes = value as string[];
+      break;
+      
+    case "tags":
+      filters.value.tags = value as string[];
+      break;
+      
+    case "dateRange":
+      filters.value.dateRange = value as { start: string; end: string };
+      break;
+  }
+  
+  // 发出筛选条件变化事件
+  emit("filtersChange", filters.value);
 };
 
 // 重置筛选条件

@@ -19,5 +19,6 @@ dist
 *.njsproj
 *.sln
 *.sw?
+private*.key
 
 imageIgnore

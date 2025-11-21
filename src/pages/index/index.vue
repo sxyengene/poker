@@ -1,324 +1,107 @@
 <template>
-  <view class="content">
+  <view class="example-page">
     <view class="header">
-      <text class="app-title">Poker4111</text>
-      <text class="app-subtitle">扑克会话管理</text>
+      <text class="title">Filter Popup 示例</text>
     </view>
-
-    <view class="stats-container">
-      <view class="stat-item">
-        <text class="stat-number">{{ totalSessions }}</text>
-        <text class="stat-label">总会话</text>
-      </view>
-      <view class="stat-item">
-        <text
-          class="stat-number"
-          :class="{ profit: totalProfit >= 0, loss: totalProfit < 0 }"
-        >
-          ${{ totalProfit >= 0 ? "+" : "" }}{{ totalProfit }}
-        </text>
-        <text class="stat-label">总利润</text>
-      </view>
-      <view class="stat-item">
-        <text class="stat-number">{{ winRate }}%</text>
-        <text class="stat-label">胜率</text>
-      </view>
-    </view>
-
-    <view class="action-buttons">
-      <button class="new-session-btn" @click="navigateToNewSession">
-        <text class="btn-icon">+</text>
-        <text class="btn-text">新建会话</text>
-      </button>
-
-      <button class="view-sessions-btn" @click="viewSessions">
-        <text class="btn-icon">📊</text>
-        <text class="btn-text">查看会话</text>
-      </button>
-    </view>
-
-    <view class="recent-sessions" v-if="recentSessions.length > 0">
-      <text class="section-title">最近会话</text>
-      <view class="session-list">
-        <view
-          class="session-item"
-          v-for="session in recentSessions"
-          :key="session.id"
-          @click="viewSessionDetail(session)"
-        >
-          <view class="session-header">
-            <text class="session-type">{{ session.sessionType.session }}</text>
-            <text
-              class="session-profit"
-              :class="{ profit: session.profit >= 0, loss: session.profit < 0 }"
-            >
-              ${{ session.profit >= 0 ? "+" : "" }}{{ session.profit }}
-            </text>
-          </view>
-          <view class="session-details">
-            <text class="session-location">{{
-              session.sessionType.location
-            }}</text>
-            <text class="session-time">{{
-              formatDate(session.startTime)
-            }}</text>
-          </view>
-        </view>
-      </view>
+    
+    <view class="content">
+      <button class="show-filter-btn" @click="showFilter">显示筛选弹窗</button>
+      
+      <!-- 筛选弹窗 -->
+      <FilterPopup
+        :visible="showFilterPopup"
+        :trigger-rect="filterIconRect"
+        @close="closeFilterPopup"
+        @filters-change="onFiltersChange"
+        @view-mode-change="onViewModeChange"
+      />
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { SessionStorage } from "../../utils/storage";
+import { ref } from "vue";
+import FilterPopup from "../../components/FilterPopup.vue";
 
-const totalSessions = ref(0);
-const totalProfit = ref(0);
-const winRate = ref(0);
-const recentSessions = ref<any[]>([]);
-
-// 导航到新建会话页面
-const navigateToNewSession = () => {
-  uni.navigateTo({
-    url: "/pages/new-session/index",
-  });
-};
-
-// 查看所有会话
-const viewSessions = () => {
-  uni.navigateTo({
-    url: "/pages/all-sessions/index",
-  });
-};
-
-// 查看会话详情
-const viewSessionDetail = (session: any) => {
-  if (session.id) {
-    uni.navigateTo({
-      url: `/pages/session-detail/index?id=${session.id}`,
-    });
-  } else {
-    uni.showToast({
-      title: "会话ID不存在",
-      icon: "error",
-    });
-  }
-};
-
-// 格式化日期
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("zh-CN", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-// 计算统计数据
-const calculateStats = () => {
-  const sessions = SessionStorage.getAllSessions();
-  const stats = SessionStorage.getSessionStats();
-
-  totalSessions.value = stats.totalSessions;
-  totalProfit.value = stats.totalProfit;
-  winRate.value = Math.round(stats.winRate);
-
-  if (sessions && sessions.length > 0) {
-    // 获取最近5个会话
-    recentSessions.value = sessions
-      .sort(
-        (a: any, b: any) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-      .slice(0, 5)
-      .map((session: any) => ({
-        ...session,
-        profit:
-          session.cashOut -
-          session.buyIn -
-          (session.rebuys || 0) -
-          (session.tableExpenses || 0),
-      }));
-  }
-};
-
-onMounted(() => {
-  // 现在使用模拟数据，不再需要初始化测试数据
-  calculateStats();
+const showFilterPopup = ref(false);
+const filterIconRect = ref({
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0,
+  width: 0,
+  height: 0,
 });
+
+// 显示筛选弹窗
+const showFilter = () => {
+  // 模拟触发元素的位置（在实际应用中，这应该是筛选图标的实际位置）
+  filterIconRect.value = {
+    top: 100,
+    right: 300,
+    bottom: 150,
+    left: 250,
+    width: 50,
+    height: 50,
+  };
+  showFilterPopup.value = true;
+};
+
+// 关闭筛选弹窗
+const closeFilterPopup = () => {
+  showFilterPopup.value = false;
+};
+
+// 处理筛选条件变化
+const onFiltersChange = (filters: any) => {
+  console.log("筛选条件变化:", filters);
+};
+
+// 处理视图模式变化
+const onViewModeChange = (mode: string) => {
+  console.log("视图模式变化:", mode);
+};
 </script>
 
-<style scoped>
-.content {
-  padding: 20px;
-  background-color: #f8f9fa;
-  height: 100%;
-  overflow-y: auto;
-  box-sizing: border-box;
+<style scoped lang="scss">
+.example-page {
+  background: #fafafa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.app-title {
-  font-size: 32px;
-  font-weight: bold;
-  color: #333;
-  display: block;
-  margin-bottom: 8px;
-}
-
-.app-subtitle {
-  font-size: 16px;
-  color: #666;
-  display: block;
-}
-
-.stats-container {
   display: flex;
-  justify-content: space-around;
-  margin-bottom: 30px;
-  background-color: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.stat-item {
-  text-align: center;
-}
-
-.stat-number {
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.stat-number.profit {
-  color: #4caf50;
-}
-
-.stat-number.loss {
-  color: #f44336;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #666;
-}
-
-.action-buttons {
-  margin-bottom: 30px;
-}
-
-.new-session-btn,
-.view-sessions-btn {
-  width: 100%;
-  padding: 16px;
-  border-radius: 12px;
-  border: none;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: 500;
+  align-items: center;
+  padding: 32rpx;
+  background: #fafafa;
 }
 
-.new-session-btn {
-  background-color: #673ab7;
-  color: white;
+.title {
+  font-size: 48rpx;
+  font-weight: 800;
+  font-family: "Fredoka", "Arial", sans-serif;
 }
 
-.view-sessions-btn {
-  background-color: #f5f5f5;
-  color: #333;
-  border: 1px solid #e0e0e0;
-}
-
-.btn-icon {
-  font-size: 18px;
-}
-
-.btn-text {
-  font-size: 16px;
-}
-
-.recent-sessions {
-  background-color: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.section-title {
-  font-size: 18px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 16px;
-  display: block;
-}
-
-.session-list {
+.content {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.session-item {
-  padding: 16px;
-  border-radius: 8px;
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-}
-
-.session-header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  justify-content: center;
+  padding: 32rpx;
 }
 
-.session-type {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
-}
-
-.session-profit {
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.session-profit.profit {
-  color: #4caf50;
-}
-
-.session-profit.loss {
-  color: #f44336;
-}
-
-.session-details {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.session-location {
-  font-size: 14px;
-  color: #666;
-}
-
-.session-time {
-  font-size: 14px;
-  color: #999;
+.show-filter-btn {
+  padding: 24rpx 48rpx;
+  background: #6c63ff;
+  color: white;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 4rpx 16rpx rgba(108, 99, 255, 0.3);
 }
 </style>

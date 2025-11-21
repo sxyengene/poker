@@ -12,8 +12,8 @@
           <image
             :src="
               isWalletSelected
-                ? '/src/static/icons/wallet-active.svg'
-                : '/src/static/icons/wallet.svg'
+                ? '/static/icons/wallet-active.png'
+                : '/static/icons/wallet.png'
             "
             mode="aspectFit"
             class="icon-image"
@@ -26,7 +26,7 @@
           @click="toggleFilter"
         >
           <image
-            src="/src/static/icons/settings.svg"
+            src="/static/icons/settings.png"
             mode="aspectFit"
             class="icon-image"
           />
@@ -44,7 +44,7 @@
           class="compact-item"
           @click="viewSessionDetail(session)"
         >
-          <text class="compact-number">{{ index + 1 }}</text>
+          <text class="compact-number">{{ session.sessionType.location }}</text>
           <view class="compact-right">
             <text
               class="compact-amount"
@@ -74,7 +74,7 @@
               <text class="icon-text">♣</text>
             </view>
             <view class="session-info">
-              <text class="session-number">{{ index + 1 }}</text>
+              <text class="session-number">{{ session.sessionType.location }}</text>
               <text class="session-details">
                 {{ formatSessionDetails(session) }}
               </text>

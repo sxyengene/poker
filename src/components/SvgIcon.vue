@@ -48,8 +48,14 @@ const props = defineProps({
 
 const emit = defineEmits(['click'])
 
+// 判断运行平台，微信小程序使用png格式，其他平台使用svg格式
 const iconPath = computed(() => {
-  return `/src/static/icons/${props.name}.svg`
+  // #ifdef MP-WEIXIN
+  return `/static/icons/${props.name}.png`
+  // #endif
+  // #ifndef MP-WEIXIN
+  return `/static/icons/${props.name}.svg`
+  // #endif
 })
 
 const currentColor = computed(() => {

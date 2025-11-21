@@ -18,8 +18,11 @@ onHide(() => {
 </script>
 
 <style>
-/* 全局CSS重置 */
-* {
+/* 全局CSS重置 - 避免使用通配符选择器 */
+view, scroll-view, swiper, swiper-item, movableView, cover-view, cover-image,
+icon, text, rich-text, progress, button, checkbox, form, input, label, picker,
+picker-view, radio, slider, switch, textarea, navigator, image, video, map,
+canvas, web-view, ad {
   margin: 0;
   padding: 0;
   box-sizing: border-box;

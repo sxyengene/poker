@@ -47,20 +47,20 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "iconPath": "static/tabbar/home.svg",
-        "selectedIconPath": "static/tabbar/home-active.svg",
+        "iconPath": "static/tabbar/home.png",
+        "selectedIconPath": "static/tabbar/home-active.png",
         "text": "首页"
       },
       {
         "pagePath": "pages/all-sessions/index",
-        "iconPath": "static/tabbar/sessions.svg",
-        "selectedIconPath": "static/tabbar/sessions-active.svg",
+        "iconPath": "static/tabbar/sessions.png",
+        "selectedIconPath": "static/tabbar/sessions-active.png",
         "text": "会话"
       },
       {
         "pagePath": "pages/stats/index",
-        "iconPath": "static/tabbar/stats.svg",
-        "selectedIconPath": "static/tabbar/stats-active.svg",
+        "iconPath": "static/tabbar/stats.png",
+        "selectedIconPath": "static/tabbar/stats-active.png",
         "text": "统计"
       }
     ]
