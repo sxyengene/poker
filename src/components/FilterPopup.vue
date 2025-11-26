@@ -40,7 +40,7 @@
         <!-- 筛选组 -->
         <view class="filter-group">
           <!-- Session Type -->
-          <view class="filter-item" @click="toggleSection('sessionType')">
+          <view class="filter-item" id="filter-session-type" @click="toggleSection('sessionType', $event)">
             <view class="item-left">
               <text class="arrow-icon">›</text>
               <text class="item-title">Session Type</text>
@@ -49,7 +49,7 @@
           </view>
 
           <!-- Bankroll -->
-          <view class="filter-item" @click="toggleSection('bankroll')">
+          <view class="filter-item" id="filter-bankroll" @click="toggleSection('bankroll', $event)">
             <view class="item-left">
               <text class="arrow-icon">›</text>
               <text class="item-title">Bankroll</text>
@@ -58,7 +58,7 @@
           </view>
 
           <!-- Location -->
-          <view class="filter-item" @click="toggleSection('location')">
+          <view class="filter-item" id="filter-location" @click="toggleSection('location', $event)">
             <view class="item-left">
               <text class="arrow-icon">›</text>
               <text class="item-title">Location</text>
@@ -67,7 +67,7 @@
           </view>
 
           <!-- Game Type -->
-          <view class="filter-item" @click="toggleSection('gameType')">
+          <view class="filter-item" id="filter-game-type" @click="toggleSection('gameType', $event)">
             <view class="item-left">
               <text class="arrow-icon">›</text>
               <text class="item-title">Game Type</text>
@@ -76,7 +76,7 @@
           </view>
 
           <!-- Stakes -->
-          <view class="filter-item" @click="toggleSection('stakes')">
+          <view class="filter-item" id="filter-stakes" @click="toggleSection('stakes', $event)">
             <view class="item-left">
               <text class="arrow-icon">›</text>
               <text class="item-title">Stakes</text>
@@ -85,7 +85,7 @@
           </view>
 
           <!-- Tags -->
-          <view class="filter-item" @click="toggleSection('tags')">
+          <view class="filter-item" id="filter-tags" @click="toggleSection('tags', $event)">
             <view class="item-left">
               <text class="arrow-icon">›</text>
               <text class="item-title">Tags</text>
@@ -96,7 +96,7 @@
 
         <!-- Date Range 组 -->
         <view class="filter-group date-range-group">
-          <view class="filter-item" @click="toggleSection('dateRange')">
+          <view class="filter-item" id="filter-date-range" @click="toggleSection('dateRange', $event)">
             <text class="item-title">Date Range</text>
             <text class="item-icon">📅</text>
           </view>
@@ -127,9 +127,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, getCurrentInstance, nextTick } from "vue";
 import { SessionStorage } from "../utils/storage";
 import SubFilterPopup from "./SubFilterPopup.vue";
+
+// 获取当前实例
+const instance = getCurrentInstance();
 
 // Props
 interface Props {
@@ -313,22 +316,88 @@ const setViewMode = (mode: string) => {
 };
 
 // 切换展开状态
-const toggleSection = (section: string) => {
+const toggleSection = (section: string, event: Event) => {
   // 记录当前操作的筛选项
   currentSection.value = section;
+  console.log('%c 123123', 'color: green;',section);
+  
+  // 根据不同的筛选项确定对应元素的 ID
+  let elementId = '';
+  switch (section) {
+    case 'sessionType':
+      elementId = '#filter-session-type';
+      break;
+    case 'bankroll':
+      elementId = '#filter-bankroll';
+      break;
+    case 'location':
+      elementId = '#filter-location';
+      break;
+    case 'gameType':
+      elementId = '#filter-game-type';
+      break;
+    case 'stakes':
+      elementId = '#filter-stakes';
+      break;
+    case 'tags':
+      elementId = '#filter-tags';
+      break;
+    case 'dateRange':
+      elementId = '#filter-date-range';
+      break;
+    default:
+      return;
+  }
   
   // 获取触发元素的位置信息
-  const element = event?.target as HTMLElement;
-  const rect = element.getBoundingClientRect();
-  subPopupTriggerRect.value = {
-    top: rect.top,
-    right: rect.right,
-    bottom: rect.bottom,
-    left: rect.left,
-    width: rect.width,
-    height: rect.height
-  };
-  
+  // 使用 nextTick 确保 DOM 更新完成后再查询元素位置
+  nextTick(() => {
+    // 使用 uni-app 提供的统一 API 替代 getBoundingClientRect
+    const query = uni.createSelectorQuery().in(instance);
+    query.selectViewport().boundingClientRect();
+    query.select(elementId).boundingClientRect((rects) => {
+      // 处理可能返回数组的情况
+      console.log('%c 222', 'color: green;',elementId,rects);
+      
+      // 在某些情况下 rects 可能为 null，需要添加容错处理
+      if (!rects) {
+        console.warn(`Element ${elementId} not found or not visible`);
+        // 使用默认位置或触发元素位置
+        subPopupTriggerRect.value = { ...props.triggerRect };
+        setupSubPopup(section);
+        subPopupVisible.value = true;
+        return;
+      }
+      
+      const rect = Array.isArray(rects) ? rects[0] : rects;
+      console.log('%c rect', 'color: green;',rect);
+      if (rect) {
+        console.log('%c 333', 'color: green;',333);
+        subPopupTriggerRect.value = {
+          top: rect.top || 0,
+          right: rect.right || 0,
+          bottom: rect.bottom || 0,
+          left: rect.left || 0,
+          width: rect.width || 0,
+          height: rect.height || 0
+        };
+        
+        setupSubPopup(section);
+        // 显示二级弹窗
+        subPopupVisible.value = true;
+      } else {
+        // rect 为空时使用默认位置
+        console.warn(`Element ${elementId} bounding rect is empty`);
+        subPopupTriggerRect.value = { ...props.triggerRect };
+        setupSubPopup(section);
+        subPopupVisible.value = true;
+      }
+    }).exec();
+  });
+};
+
+// 设置二级弹窗内容
+const setupSubPopup = (section: string) => {
   // 根据不同的筛选项设置不同的弹窗内容
   switch (section) {
     case "sessionType":
@@ -415,9 +484,6 @@ const toggleSection = (section: string) => {
     default:
       return;
   }
-  
-  // 显示二级弹窗
-  subPopupVisible.value = true;
 };
 
 // 关闭二级弹窗

@@ -181,18 +181,8 @@ const popupStyle = computed(() => {
 
   // 获取真实的弹窗元素宽度用于边界检查
   let popupWidth = 200; // 默认宽度
-  // 在支持 document 的环境中获取元素宽度
-  if (typeof document !== 'undefined') {
-    const popupElement = document.querySelector('.sub-popup-content') as HTMLElement | null;
-    if (popupElement) {
-      // 强制回流以获取准确的宽度
-      popupElement.style.visibility = 'hidden';
-      popupElement.style.display = 'block';
-      popupWidth = popupElement.offsetWidth || 200;
-      popupElement.style.visibility = '';
-      popupElement.style.display = '';
-    }
-  }
+  // 在微信小程序等非浏览器环境中，避免使用 document.querySelector 和 getBoundingClientRect
+  // 因为这些 API 在微信小程序中不可用或行为不同
 
   // 边界检查：如果右侧空间不足则左对齐
   if (leftPosition + popupWidth > screenWidth) {
